@@ -1,7 +1,6 @@
 package com.stickersafari.entity;
 
 import jakarta.persistence.*;
-import javax.persistence.Entity;
 import lombok.Data;
 
 import java.util.HashMap;
