@@ -1,9 +1,12 @@
 -- Add stars column to collector
 ALTER TABLE collector ADD COLUMN IF NOT EXISTS stars INTEGER DEFAULT 0;
 
+-- Create sequence for completed_album
+CREATE SEQUENCE IF NOT EXISTS completed_album_id_seq START WITH 1 INCREMENT BY 1;
+
 -- Create completed_album table
 CREATE TABLE IF NOT EXISTS completed_album (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT PRIMARY KEY DEFAULT nextval('completed_album_id_seq'),
     collector_id BIGINT NOT NULL,
     album_id BIGINT NOT NULL,
     completed_at TIMESTAMP NOT NULL,
