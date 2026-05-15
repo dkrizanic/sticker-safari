@@ -35,8 +35,7 @@ public class Sticker {
     private String src;
 
     @ManyToOne(cascade = CascadeType.DETACH)
-    @JoinColumn(name = "album", nullable = false)
-    @NotNull(message = "Sticker must belong to an album")
+    @JoinColumn(name = "album")
     private Album album;
     
     @Override

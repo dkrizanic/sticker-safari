@@ -1,5 +1,6 @@
 package com.stickersafari.service.impl;
 
+import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.exception.EntityNotFoundException;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,5 +87,38 @@ public class CollectorServiceImpl implements CollectorService {
         }
         
         save(collector);
+    }
+
+    @Override
+    public List<Collector> getAllCollectors() {
+        log.debug("Getting all collectors");
+        return collectorRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public Collector createCollector(CollectorRequest request) {
+        log.info("Creating new collector: {}", request.getUsername());
+        Collector collector = new Collector();
+        collector.setUsername(request.getUsername());
+        collector.setOwnedStickers(new HashMap<>());
+        return collectorRepository.save(collector);
+    }
+
+    @Override
+    @Transactional
+    public Collector updateCollector(Long collectorId, CollectorRequest request) {
+        log.info("Updating collector with ID: {}", collectorId);
+        Collector collector = findById(collectorId);
+        collector.setUsername(request.getUsername());
+        return collectorRepository.save(collector);
+    }
+
+    @Override
+    @Transactional
+    public void deleteCollector(Long collectorId) {
+        log.info("Deleting collector with ID: {}", collectorId);
+        Collector collector = findById(collectorId);
+        collectorRepository.delete(collector);
     }
 }

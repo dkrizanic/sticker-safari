@@ -1,5 +1,6 @@
 package com.stickersafari.service;
 
+import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.entity.Collector;
 
 import java.util.List;
@@ -14,4 +15,10 @@ public interface CollectorService {
     List<Collector> findPotentialTradingPartners(Long offeredStickerId, Long receivedStickerId);
     
     void addStickersToCollector(Long collectorId, List<Long> stickerIds);
+    
+    // CRUD operations
+    List<Collector> getAllCollectors();
+    Collector createCollector(CollectorRequest request);
+    Collector updateCollector(Long collectorId, CollectorRequest request);
+    void deleteCollector(Long collectorId);
 }

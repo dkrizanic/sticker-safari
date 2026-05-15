@@ -1,7 +1,10 @@
 package com.stickersafari.service.impl;
 
+import com.stickersafari.dto.StickerRequest;
+import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.exception.EntityNotFoundException;
+import com.stickersafari.repository.AlbumRepository;
 import com.stickersafari.repository.StickerRepository;
 import com.stickersafari.service.StickerService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import java.util.List;
 public class StickerServiceImpl implements StickerService {
 
     private final StickerRepository stickerRepository;
+    private final AlbumRepository albumRepository;
 
     @Override
     public Sticker findOne(Long stickerId) {
@@ -56,5 +60,49 @@ public class StickerServiceImpl implements StickerService {
         }
         
         return randomStickers;
+    }
+
+    @Override
+    public List<Sticker> getAllStickers() {
+        log.debug("Getting all stickers");
+        return stickerRepository.findAll();
+    }
+
+    @Override
+    @Transactional
+    public Sticker createSticker(StickerRequest request) {
+        log.info("Creating new sticker: {}", request.getName());
+        Sticker sticker = new Sticker();
+        sticker.setName(request.getName());
+        sticker.setLatinName(request.getLatinName());
+        sticker.setHabitat(request.getHabitat());
+        sticker.setDescription(request.getDescription());
+        sticker.setSrc(request.getSrc());
+        
+        // Set album if provided
+        if (request.getAlbumId() != null) {
+            Album album = albumRepository.findById(request.getAlbumId())
+                    .orElseThrow(() -> new EntityNotFoundException("Album not found with ID: " + request.getAlbumId()));
+            sticker.setAlbum(album);
+        }
+        
+        return stickerRepository.save(sticker);
+    }
+
+    @Override
+    @Transactional
+    public Sticker updateSticker(Long stickerId, StickerRequest request) {
+        log.info("Updating sticker with ID: {}", stickerId);
+        Sticker sticker = findOne(stickerId);
+        
+        sticker.setName(request.getName());
+        sticker.setLatinName(request.getLatinName());
+        sticker.setHabitat(request.getHabitat());
+        sticker.setDescription(request.getDescription());
+        sticker.setSrc(request.getSrc());
+        
+        // Cannot change album via update (as per requirements)
+        
+        return stickerRepository.save(sticker);
     }
 }

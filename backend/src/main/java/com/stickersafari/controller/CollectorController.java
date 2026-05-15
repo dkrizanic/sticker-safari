@@ -1,12 +1,17 @@
 package com.stickersafari.controller;
 
+import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.dto.CollectorResponse;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.mapper.CollectorMapper;
 import com.stickersafari.service.CollectorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/collectors")
@@ -16,6 +21,13 @@ public class CollectorController {
 
     private final CollectorService collectorService;
     private final CollectorMapper collectorMapper;
+
+    @GetMapping
+    public ResponseEntity<List<CollectorResponse>> getAllCollectors() {
+        log.debug("Getting all collectors");
+        List<Collector> collectors = collectorService.getAllCollectors();
+        return ResponseEntity.ok(collectorMapper.toResponseList(collectors));
+    }
 
     @GetMapping("/{id}")
     public CollectorResponse getCollector(@PathVariable("id") Long id) {
@@ -32,5 +44,27 @@ public class CollectorController {
             throw new RuntimeException("Collector not found with username: " + username);
         }
         return collectorMapper.toResponse(collector);
+    }
+
+    @PostMapping
+    public ResponseEntity<CollectorResponse> createCollector(@RequestBody CollectorRequest request) {
+        log.info("Creating collector: {}", request.getUsername());
+        Collector collector = collectorService.createCollector(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(collectorMapper.toResponse(collector));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CollectorResponse> updateCollector(@PathVariable("id") Long id,
+                                                              @RequestBody CollectorRequest request) {
+        log.info("Updating collector with ID: {}", id);
+        Collector collector = collectorService.updateCollector(id, request);
+        return ResponseEntity.ok(collectorMapper.toResponse(collector));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCollector(@PathVariable("id") Long id) {
+        log.info("Deleting collector with ID: {}", id);
+        collectorService.deleteCollector(id);
+        return ResponseEntity.noContent().build();
     }
 }
