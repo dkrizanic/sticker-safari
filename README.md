@@ -45,9 +45,15 @@ npm test -- --watchAll=false
 
 ## 📦 Technology Stack
 
-- **Backend**: Spring Boot 4.0.6, Java 21, PostgreSQL, Liquibase, Hibernate
+- **Backend**: Spring Boot 4.0.5, Java 21, PostgreSQL, Hibernate ORM
 - **Frontend**: React 18, TypeScript, TailwindCSS, Axios
 - **Infrastructure**: Docker, Docker Compose, nginx
+
+## 💾 Database Management
+
+- **Hibernate ORM** automatically creates and updates database schema from JPA entities
+- **Initial data** is loaded automatically on first startup via `DataInitializer`
+- Includes 4 collectors, 2 albums, and 10 stickers with sample collection data
 
 ## ✅ Test Status
 
