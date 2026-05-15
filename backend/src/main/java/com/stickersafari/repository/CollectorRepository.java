@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CollectorRepository extends JpaRepository<Collector, Long> {
+    Collector findByUsername(String username);
 }

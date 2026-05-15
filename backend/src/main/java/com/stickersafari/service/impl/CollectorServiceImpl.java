@@ -27,6 +27,11 @@ public class CollectorServiceImpl implements CollectorService {
     }
 
     @Override
+    public Collector findByUsername(String username) {
+        return collectorRepository.findByUsername(username);
+    }
+
+    @Override
     public Collector save(Collector collector) {
         return collectorRepository.save(collector);
     }
