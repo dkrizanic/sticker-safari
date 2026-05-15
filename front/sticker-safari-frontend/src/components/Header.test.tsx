@@ -24,7 +24,7 @@ describe('Header Component Tests', () => {
     mockCurrentUser = null;
   });
 
-  const renderHeader = (user = null) => {
+  const renderHeader = (user: any = null) => {
     mockCurrentUser = user;
     return render(
       <BrowserRouter>
