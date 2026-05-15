@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import mockApi from '../api/mockApi';
+import apiService from '../api/apiService';
 import { Sticker } from '../types';
+import { useUser } from '../context/UserContext';
 
 
 const PackOpening = (): JSX.Element => {
     const [stickerNumber, setStickerNumber] = useState<string>('');
     const [selectedAlbum, setSelectedAlbum] = useState<string>('1');
     const [packResults, setPackResults] = useState<Sticker[]>([]);
+    const { currentUser } = useUser();
 
     const [hasResults, setHasResults] = useState(false);
     
@@ -15,8 +17,24 @@ const PackOpening = (): JSX.Element => {
     }, [packResults]);
 
     const handleOpenPack = async () => {
-        const data = await mockApi.openPack(selectedAlbum, parseInt(stickerNumber, 10));
-        setPackResults(data)
+        if (!currentUser?.id) {
+            alert('Please login first to open packs');
+            return;
+        }
+
+        const numStickers = parseInt(stickerNumber, 10);
+        if (isNaN(numStickers) || numStickers < 1) {
+            alert('Please enter a valid number of stickers');
+            return;
+        }
+
+        try {
+            const data = await apiService.openPack(parseInt(selectedAlbum, 10), currentUser.id, numStickers);
+            setPackResults(data);
+        } catch (error) {
+            console.error('Failed to open pack:', error);
+            alert('Failed to open pack. Make sure the backend is running.');
+        }
     };
 
     return (
@@ -54,6 +72,7 @@ const PackOpening = (): JSX.Element => {
                     <div className="flex flex-wrap justify-center">
                         {packResults.map((sticker) => (
                             <img
+                                key={sticker.id}
                                 src={sticker.src}
                                 alt={`Sticker ${sticker.id}`}
                                 className="w-40 h-30 m-2 border border-black p-1"

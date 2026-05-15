@@ -11,7 +11,7 @@ function AlbumStickers({ albumStickers, ownedStickers }: AlbumStickersProps): JS
     return (
         <div className="flex flex-wrap">
             {albumStickers.map((sticker) => (
-                <Sticker sticker={sticker} hidden={!ownedStickers.includes(sticker.id)} />
+                <Sticker key={sticker.id} sticker={sticker} hidden={!ownedStickers.includes(sticker.id)} />
             ))}
         </div>
     );
