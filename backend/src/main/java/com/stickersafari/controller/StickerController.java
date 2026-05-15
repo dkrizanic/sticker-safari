@@ -23,12 +23,14 @@ public class StickerController {
     private final CollectorRepository collectorRepository;
 
     @GetMapping("/open/{albumId}/collector/{userId}")
-    public List<StickerResponse> openPack(@PathVariable("albumId") Long albumId, @PathVariable("userId") Long userId) {
+    public List<StickerResponse> openPack(@PathVariable("albumId") Long albumId, 
+                                           @PathVariable("userId") Long userId,
+                                           @RequestParam(value = "size", defaultValue = "3") int size) {
         List<Sticker> albumStickers = stickerService.getStickersOfAlbum(albumId);
-        List<Sticker> randomStickers = List.of();
+        List<Sticker> randomStickers = new ArrayList<>();
         Random random = new Random();
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < size; i++) {
             int randomIndex = random.nextInt(albumStickers.size());
             Sticker randomSticker = albumStickers.get(randomIndex);
             randomStickers.add(randomSticker);
@@ -58,6 +60,7 @@ public class StickerController {
             stickerResponse.setHabitat(sticker.getHabitat());
             stickerResponse.setDescription(sticker.getDescription());
             stickerResponse.setId(sticker.getId());
+            stickerResponse.setSrc(sticker.getSrc());
 
             stickerResponses.add(stickerResponse);
         }
