@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AlbumCard from './AlbumCard';
-import mockApi from '../api/mockApi';
+import apiService from '../api/apiService';
 import { useUser } from '../context/UserContext';
 import { Album } from '../types';
 
@@ -11,7 +11,7 @@ const Collection = (): JSX.Element => {
     const {currentUser} = useUser();
 
     //mock
-    const generateRandomOwnedStickers = (user: any): number[] => { 
+    const generateRandomOwnedStickers = (): number[] => { 
         const ownedStickers: number[] = [];
 
         albums.forEach((album) => {
@@ -29,8 +29,16 @@ const Collection = (): JSX.Element => {
 
     useEffect(() => {
         const fetchAlbums = async () => {
-            const data = await mockApi.getAlbums() as any; 
-            setAlbums(data as string[]);
+            try {
+                // Fetch both albums (IDs 1 and 2 as per database)
+                const [album1, album2] = await Promise.all([
+                    apiService.getAlbum(1),
+                    apiService.getAlbum(2)
+                ]);
+                setAlbums([album1, album2]);
+            } catch (error) {
+                console.error('Failed to fetch albums:', error);
+            }
         };
         
         fetchAlbums();
@@ -39,8 +47,10 @@ const Collection = (): JSX.Element => {
     return (
         <div className="py-4 ml-2">
             {albums.map((album) => (
-                <AlbumCard album={album}
-                           ownedStickers={currentUser ? generateRandomOwnedStickers() : []}/>
+                <AlbumCard 
+                    key={album.id}
+                    album={album}
+                    ownedStickers={currentUser ? generateRandomOwnedStickers() : []}/>
             ))}
         </div>
     );
