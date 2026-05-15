@@ -9,4 +9,6 @@ public interface StickerService {
     Sticker findOne(Long stickerId);
 
     List<Sticker> getStickersOfAlbum(Long albumId);
+    
+    List<Sticker> openPack(Long albumId, Long userId, int size);
 }

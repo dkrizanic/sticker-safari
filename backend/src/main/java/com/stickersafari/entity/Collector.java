@@ -1,10 +1,13 @@
 package com.stickersafari.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Entity
 @Data
@@ -16,9 +19,12 @@ public class Collector {
     @SequenceGenerator(name = "collector_id_seq", sequenceName = "collector_id_seq", allocationSize = 1)
     private Long id;
 
+    @NotBlank(message = "Username is required")
+    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Column(unique = true, nullable = false)
     private String username;
 
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection
     @CollectionTable(name = "collector_sticker", joinColumns = @JoinColumn(name = "collector_id"))
     @MapKeyColumn(name = "sticker_id")
     @Column(name = "quantity")
@@ -42,5 +48,25 @@ public class Collector {
             throw new Exception("Can't remove sticker " + stickerId + " because " + this.getUsername() + " does not have it");
         }
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Collector)) return false;
+        Collector collector = (Collector) o;
+        return id != null && Objects.equals(id, collector.id);
+    }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Collector{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                '}';
+    }
 }

@@ -1,81 +1,41 @@
 package com.stickersafari.controller;
 
 import com.stickersafari.dto.StickerResponse;
-import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.Sticker;
-import com.stickersafari.repository.CollectorRepository;
+import com.stickersafari.mapper.StickerMapper;
+import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.StickerService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("stickers")
 @RequiredArgsConstructor
+@Slf4j
 public class StickerController {
 
     private final StickerService stickerService;
-
-    private final CollectorRepository collectorRepository;
+    private final CollectorService collectorService;
+    private final StickerMapper stickerMapper;
 
     @GetMapping("/open/{albumId}/collector/{userId}")
-    public List<StickerResponse> openPack(@PathVariable("albumId") Long albumId, 
+    public ResponseEntity<List<StickerResponse>> openPack(@PathVariable("albumId") Long albumId, 
                                            @PathVariable("userId") Long userId,
                                            @RequestParam(value = "size", defaultValue = "3") int size) {
-        List<Sticker> albumStickers = stickerService.getStickersOfAlbum(albumId);
-        List<Sticker> randomStickers = new ArrayList<>();
-        Random random = new Random();
-
-        for (int i = 0; i < size; i++) {
-            int randomIndex = random.nextInt(albumStickers.size());
-            Sticker randomSticker = albumStickers.get(randomIndex);
-            randomStickers.add(randomSticker);
-        }
-
-        List<StickerResponse> stickerResponses = mapStickersToStickerResponses(randomStickers);
-
-        Collector collector = collectorRepository.findById(userId).get();
-
-        Map<Long, Integer> ownedStickers = collector.getOwnedStickers();
-
-        ownedStickers = updateCollectorStickers(ownedStickers, stickerResponses);
-        collector.setOwnedStickers(ownedStickers);
-        collectorRepository.save(collector);
-
-        return stickerResponses;
-    }
-
-    private List<StickerResponse> mapStickersToStickerResponses(List<Sticker> stickers) {
-        List<StickerResponse> stickerResponses = new ArrayList<>();
-
-        for (Sticker sticker : stickers) {
-            StickerResponse stickerResponse = new StickerResponse();
-
-            stickerResponse.setName(sticker.getName());
-            stickerResponse.setLatinName(sticker.getLatinName());
-            stickerResponse.setHabitat(sticker.getHabitat());
-            stickerResponse.setDescription(sticker.getDescription());
-            stickerResponse.setId(sticker.getId());
-            stickerResponse.setSrc(sticker.getSrc());
-
-            stickerResponses.add(stickerResponse);
-        }
-
-        return stickerResponses;
-    }
-
-    private Map<Long, Integer> updateCollectorStickers(Map<Long, Integer> ownedStickers, List<StickerResponse> stickers) {
-        for (StickerResponse sticker : stickers) {
-            if (ownedStickers.containsKey(sticker.getId())){
-                ownedStickers.put(sticker.getId(), ownedStickers.get(sticker.getId()) + 1);
-            } else {
-                ownedStickers.put(sticker.getId(), 1);
-            }
-        }
-        return ownedStickers;
+        log.info("Opening pack for user {} from album {}, size: {}", userId, albumId, size);
+        
+        List<Sticker> randomStickers = stickerService.openPack(albumId, userId, size);
+        List<Long> stickerIds = randomStickers.stream()
+                .map(Sticker::getId)
+                .collect(Collectors.toList());
+        
+        collectorService.addStickersToCollector(userId, stickerIds);
+        
+        return ResponseEntity.ok(stickerMapper.toResponseList(randomStickers));
     }
 }

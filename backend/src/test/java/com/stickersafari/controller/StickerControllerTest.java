@@ -4,7 +4,8 @@ import com.stickersafari.dto.StickerResponse;
 import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.Sticker;
-import com.stickersafari.repository.CollectorRepository;
+import com.stickersafari.mapper.StickerMapper;
+import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.StickerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseEntity;
 
 import java.util.*;
 
@@ -26,7 +28,10 @@ class StickerControllerTest {
     private StickerService stickerService;
 
     @Mock
-    private CollectorRepository collectorRepository;
+    private CollectorService collectorService;
+    
+    @Mock
+    private StickerMapper stickerMapper;
 
     @InjectMocks
     private StickerController stickerController;
@@ -34,6 +39,7 @@ class StickerControllerTest {
     private Collector testCollector;
     private Album testAlbum;
     private List<Sticker> testStickers;
+    private List<StickerResponse> testStickerResponses;
 
     @BeforeEach
     void setUp() {
@@ -49,12 +55,18 @@ class StickerControllerTest {
         testCollector.setOwnedStickers(new HashMap<>());
 
         testStickers = new ArrayList<>();
+        testStickerResponses = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
             Sticker sticker = new Sticker();
             sticker.setId((long) i);
             sticker.setName("Animal " + i);
             sticker.setAlbum(testAlbum);
             testStickers.add(sticker);
+            
+            StickerResponse response = new StickerResponse();
+            response.setId((long) i);
+            response.setName("Animal " + i);
+            testStickerResponses.add(response);
         }
     }
 
@@ -62,11 +74,12 @@ class StickerControllerTest {
     @DisplayName("Bug Fix: openPack should return mutable list (not List.of())")
     void testOpenPackReturnsMutableList() {
         // Given
-        when(stickerService.getStickersOfAlbum(anyLong())).thenReturn(testStickers);
-        when(collectorRepository.findById(anyLong())).thenReturn(Optional.of(testCollector));
+        when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
+        when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
 
         // When
-        List<StickerResponse> response = stickerController.openPack(1L, 1L, 5);
+        ResponseEntity<List<StickerResponse>> responseEntity = stickerController.openPack(1L, 1L, 5);
+        List<StickerResponse> response = responseEntity.getBody();
 
         // Then
         assertNotNull(response);
@@ -79,7 +92,7 @@ class StickerControllerTest {
             }
         });
         
-        verify(collectorRepository, times(1)).save(any(Collector.class));
+        verify(collectorService, times(1)).addStickersToCollector(eq(1L), anyList());
     }
 
     @Test
@@ -87,40 +100,42 @@ class StickerControllerTest {
     void testOpenPackWithSizeParameter() {
         // Given
         int requestedSize = 3;
-        when(stickerService.getStickersOfAlbum(anyLong())).thenReturn(testStickers);
-        when(collectorRepository.findById(anyLong())).thenReturn(Optional.of(testCollector));
+        List<Sticker> subset = testStickers.subList(0, requestedSize);
+        List<StickerResponse> subsetResponses = testStickerResponses.subList(0, requestedSize);
+        when(stickerService.openPack(anyLong(), anyLong(), eq(requestedSize))).thenReturn(subset);
+        when(stickerMapper.toResponseList(subset)).thenReturn(subsetResponses);
 
         // When
-        List<StickerResponse> response = stickerController.openPack(1L, 1L, requestedSize);
+        ResponseEntity<List<StickerResponse>> responseEntity = stickerController.openPack(1L, 1L, requestedSize);
+        List<StickerResponse> response = responseEntity.getBody();
 
         // Then
         assertNotNull(response);
         assertEquals(requestedSize, response.size(), "Should return requested number of stickers");
-        verify(stickerService, times(1)).getStickersOfAlbum(1L);
+        verify(stickerService, times(1)).openPack(1L, 1L, requestedSize);
     }
 
     @Test
     @DisplayName("openPack should add stickers to collector's owned stickers")
     void testOpenPackAddsStickersToCollector() {
         // Given
-        when(stickerService.getStickersOfAlbum(anyLong())).thenReturn(testStickers);
-        when(collectorRepository.findById(anyLong())).thenReturn(Optional.of(testCollector));
+        when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
+        when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
 
         // When
         stickerController.openPack(1L, 1L, 5);
 
         // Then
-        verify(collectorRepository, times(1)).save(argThat(collector ->
-            collector.getOwnedStickers().size() > 0
-        ));
+        verify(collectorService, times(1)).addStickersToCollector(eq(1L), anyList());
     }
 
     @Test
-    @DisplayName("openPack should return 404 when collector not found")
+    @DisplayName("openPack should handle service exceptions")
     void testOpenPackCollectorNotFound() {
         // Given
-        when(stickerService.getStickersOfAlbum(anyLong())).thenReturn(testStickers);
-        when(collectorRepository.findById(anyLong())).thenReturn(Optional.empty());
+        when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
+        doThrow(new NoSuchElementException("Collector not found"))
+            .when(collectorService).addStickersToCollector(anyLong(), anyList());
 
         // When/Then
         assertThrows(NoSuchElementException.class, () -> {

@@ -3,32 +3,36 @@ package com.stickersafari.service.impl;
 import com.stickersafari.dto.AnswerPendingTradeOfferRequest;
 import com.stickersafari.dto.GlobalTradeOfferRequest;
 import com.stickersafari.dto.SpecificTradeOfferRequest;
-import com.stickersafari.entity.Collector;
-import com.stickersafari.entity.Notification;
-import com.stickersafari.entity.TradeOffer;
-import com.stickersafari.entity.TradeOfferKey;
+import com.stickersafari.entity.*;
+import com.stickersafari.exception.EntityNotFoundException;
+import com.stickersafari.exception.TradeOfferException;
 import com.stickersafari.repository.TradeOfferRepository;
 import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.NotificationService;
 import com.stickersafari.service.StickerService;
 import com.stickersafari.service.TradingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
+@Transactional(readOnly = true)
 public class TradingServiceImpl implements TradingService {
     private final CollectorService collectorService;
     private final StickerService stickerService;
     private final TradeOfferRepository tradeOfferRepository;
-
     private final NotificationService notificationService;
 
     @Override
+    @Transactional
     public TradeOffer sendSpecificTradeOffer(SpecificTradeOfferRequest request) {
+        log.info("Sending specific trade offer from {} to {}", request.getSenderId(), request.getReceiverId());
         Collector receiver = collectorService.findById(request.getReceiverId());
         Collector sender = collectorService.findById(request.getSenderId());
 
@@ -47,12 +51,18 @@ public class TradingServiceImpl implements TradingService {
     }
 
     @Override
+    @Transactional
     public String sendGlobalTradeOffer(GlobalTradeOfferRequest request) {
+        log.info("Sending global trade offer from collector {}", request.getSenderId());
         Collector sender = collectorService.findById(request.getSenderId());
 
         boolean senderHasOfferedSticker = sender.getOwnedStickers().containsKey(request.getOfferedStickerId());
-        if (senderHasOfferedSticker) {
-            List<Collector> collectors = collectorService.findPotentialTradingPartners(request.getOfferedStickerId(), request.getReceivedStickerId());
+        if (!senderHasOfferedSticker) {
+            throw new TradeOfferException("Sender does not own the offered sticker");
+        }
+        
+        List<Collector> collectors = collectorService.findPotentialTradingPartners(request.getOfferedStickerId(), request.getReceivedStickerId());
+        log.debug("Found {} potential trading partners", collectors.size());
 
             for (Collector collector : collectors) {
                 SpecificTradeOfferRequest specificTradeOfferRequest = new SpecificTradeOfferRequest();
@@ -76,24 +86,33 @@ public class TradingServiceImpl implements TradingService {
 
                 notificationService.saveNotification(notification);
             }
-        }
-
-        return "Sent trade offers to potential partners";
+        
+        log.info("Sent {} global trade offers", collectors.size());
+        return "Sent trade offers to " + collectors.size() + " potential partners";
     }
 
     @Override
     public List<TradeOffer> getPendingReceivedTradeOffers(Long collectorId) {
-        return tradeOfferRepository.getPendingReceivedTradeOffersByUserId(collectorId);
+        return tradeOfferRepository.findByReceiverIdAndStatus(collectorId, "PENDING");
     }
 
     @Override
     public List<TradeOffer> getPendingSentTradeOffers(Long collectorId) {
-        return tradeOfferRepository.getPendingSentTradeOffersByUserId(collectorId);
+        return tradeOfferRepository.findBySenderIdAndStatus(collectorId, "PENDING");
     }
 
     @Override
+    @Transactional
     public TradeOffer acceptTradeOffer(AnswerPendingTradeOfferRequest request) throws Exception {
-        TradeOffer tradeOffer = tradeOfferRepository.getTradeOfferByIds(request.getSenderId(), request.getReceiverId(), request.getOfferedStickerId(), request.getReceivedStickerId());
+        log.info("Accepting trade offer: sender={}, receiver={}", request.getSenderId(), request.getReceiverId());
+        
+        TradeOffer tradeOffer = tradeOfferRepository.findTradeOffer(
+                request.getSenderId(), request.getReceiverId(), 
+                request.getOfferedStickerId(), request.getReceivedStickerId());
+        
+        if (tradeOffer == null) {
+            throw new EntityNotFoundException("Trade offer not found");
+        }
 
         Collector sender = collectorService.findById(request.getSenderId());
         Collector receiver = collectorService.findById(request.getReceiverId());
@@ -106,7 +125,7 @@ public class TradingServiceImpl implements TradingService {
         receiver.addSticker(request.getOfferedStickerId());
         collectorService.save(receiver);
 
-        tradeOffer.setStatus("ACCEPTED");
+        tradeOffer.setStatus(TradeOfferStatus.ACCEPTED);
 
         Notification notification = new Notification();
         notification.setCreatedAt(LocalDateTime.now());
@@ -115,16 +134,27 @@ public class TradingServiceImpl implements TradingService {
         notification.setMessage(receiver.getUsername() + " accepted your trade offer");
 
         notificationService.saveNotification(notification);
+        log.info("Trade offer accepted successfully");
         return tradeOfferRepository.save(tradeOffer);
     }
 
     @Override
+    @Transactional
     public TradeOffer refusePendingTradeOffer(AnswerPendingTradeOfferRequest request) {
-        TradeOffer tradeOffer = tradeOfferRepository.getTradeOfferByIds(request.getSenderId(), request.getReceiverId(), request.getOfferedStickerId(), request.getReceivedStickerId());
+        log.info("Refusing trade offer: sender={}, receiver={}", request.getSenderId(), request.getReceiverId());
+        
+        TradeOffer tradeOffer = tradeOfferRepository.findTradeOffer(
+                request.getSenderId(), request.getReceiverId(), 
+                request.getOfferedStickerId(), request.getReceivedStickerId());
+        
+        if (tradeOffer == null) {
+            throw new EntityNotFoundException("Trade offer not found");
+        }
+
         Collector sender = collectorService.findById(request.getSenderId());
         Collector receiver = collectorService.findById(request.getReceiverId());
 
-        tradeOffer.setStatus("REFUSED");
+        tradeOffer.setStatus(TradeOfferStatus.REFUSED);
 
         Notification notification = new Notification();
         notification.setCreatedAt(LocalDateTime.now());
@@ -133,7 +163,8 @@ public class TradingServiceImpl implements TradingService {
         notification.setMessage(receiver.getUsername() + " refused your trade offer");
 
         notificationService.saveNotification(notification);
-
+        
+        log.info("Trade offer refused");
         return tradeOfferRepository.save(tradeOffer);
     }
 
@@ -147,7 +178,7 @@ public class TradingServiceImpl implements TradingService {
         tradeOffer.setOfferedSticker(stickerService.findOne(request.getOfferedStickerId()));
         tradeOffer.setReceivedSticker(stickerService.findOne(request.getReceivedStickerId()));
         tradeOffer.setMessage(request.getMessage());
-        tradeOffer.setStatus("PENDING");
+        tradeOffer.setStatus(TradeOfferStatus.PENDING);
 
         return tradeOffer;
     }

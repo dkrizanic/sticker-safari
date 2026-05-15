@@ -3,6 +3,7 @@ package com.stickersafari.controller;
 import com.stickersafari.entity.Notification;
 import com.stickersafari.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,12 +11,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationController {
 
     private final NotificationService notificationService;
 
     @GetMapping("/{collectorId}")
     public List<Notification> getNotifications(@PathVariable("collectorId") Long collectorId, @RequestParam("read") boolean read) {
+        log.debug("Getting notifications for collector {}, read={}", collectorId, read);
         if (read) {
             return sortNotifications(notificationService.getNotifications(collectorId));
         }

@@ -135,7 +135,7 @@ docker-compose ps
 ### Services
 
 1. **postgres** - PostgreSQL 15 database with persistent volume
-2. **backend** - Spring Boot REST API with Liquibase migrations
+2. **backend** - Spring Boot REST API with Flyway migrations
 3. **frontend** - React SPA served by nginx
 
 ---
@@ -260,7 +260,8 @@ docker-compose up --build frontend
 
 **Database Changes:**
 ```bash
-# Add new Liquibase changelog in backend/liquibase/db/changelog/
+# Add new Flyway migration in backend/src/main/resources/db/migration/
+# Use format: V<version>__<description>.sql (e.g., V3__add_new_table.sql)
 # Restart backend to apply migrations
 docker-compose restart backend
 ```
@@ -320,8 +321,13 @@ Sticker safari/
 │   ├── Dockerfile              # Backend build instructions
 │   ├── .dockerignore           # Files to exclude
 │   ├── pom.xml                 # Maven dependencies
-│   ├── src/                    # Java source code
-│   └── liquibase/              # Database migrations
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/           # Java source code
+│   │   │   └── resources/
+│   │   │       └── db/
+│   │   │           └── migration/  # Flyway SQL migrations
+│   │   └── test/               # Unit tests
 └── front/
     └── sticker-safari-frontend/
         ├── Dockerfile          # Frontend build instructions

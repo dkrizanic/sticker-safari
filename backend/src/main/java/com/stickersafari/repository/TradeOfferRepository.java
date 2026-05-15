@@ -10,14 +10,10 @@ import java.util.List;
 
 @Repository
 public interface TradeOfferRepository extends JpaRepository<TradeOffer, TradeOfferKey> {
-    @Query("SELECT t FROM TradeOffer t WHERE t.receiver.id = ?1 AND t.status = 'PENDING'")
-    List<TradeOffer> getPendingReceivedTradeOffersByUserId(Long collectorId);
+    List<TradeOffer> findByReceiverIdAndStatus(Long collectorId, String status);
 
-    @Query("SELECT t FROM TradeOffer t WHERE t.sender.id = ?1 AND t.status = 'PENDING'")
-    List<TradeOffer> getPendingSentTradeOffersByUserId(Long collectorId);
+    List<TradeOffer> findBySenderIdAndStatus(Long collectorId, String status);
 
     @Query("SELECT t FROM TradeOffer t WHERE t.sender.id = ?1 AND t.receiver.id = ?2 AND t.offeredSticker.id = ?3 AND t.receivedSticker.id = ?4")
-    TradeOffer getTradeOfferByIds(Long senderId, Long receiverId, Long offeredStickerId, Long receivedStickerId);
-
-
+    TradeOffer findTradeOffer(Long senderId, Long receiverId, Long offeredStickerId, Long receivedStickerId);
 }

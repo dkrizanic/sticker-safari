@@ -2,6 +2,7 @@ package com.stickersafari.controller;
 
 import com.stickersafari.dto.CollectorResponse;
 import com.stickersafari.entity.Collector;
+import com.stickersafari.mapper.CollectorMapper;
 import com.stickersafari.service.CollectorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,11 +23,15 @@ class CollectorControllerTest {
 
     @Mock
     private CollectorService collectorService;
+    
+    @Mock
+    private CollectorMapper collectorMapper;
 
     @InjectMocks
     private CollectorController collectorController;
 
     private Collector testCollector;
+    private CollectorResponse testCollectorResponse;
 
     @BeforeEach
     void setUp() {
@@ -36,6 +41,10 @@ class CollectorControllerTest {
         testCollector.setId(1L);
         testCollector.setUsername("Bob");
         testCollector.setOwnedStickers(new HashMap<>());
+        
+        testCollectorResponse = new CollectorResponse();
+        testCollectorResponse.setId(1L);
+        testCollectorResponse.setUsername("Bob");
     }
 
     @Test
@@ -43,15 +52,17 @@ class CollectorControllerTest {
     void testGetCollectorByUsername() {
         // Given
         when(collectorService.findByUsername(anyString())).thenReturn(testCollector);
+        when(collectorMapper.toResponse(testCollector)).thenReturn(testCollectorResponse);
 
         // When
         CollectorResponse response = collectorController.getCollectorByUsername("Bob");
 
         // Then
         assertNotNull(response);
-        assertEquals(1L, response.getId(), "CollectorResponse should include id field");
+        assertEquals(1L, response.getId());
         assertEquals("Bob", response.getUsername());
         verify(collectorService, times(1)).findByUsername("Bob");
+        verify(collectorMapper, times(1)).toResponse(testCollector);
     }
 
     @Test
@@ -59,6 +70,7 @@ class CollectorControllerTest {
     void testCollectorResponseIncludesId() {
         // Given
         when(collectorService.findByUsername(anyString())).thenReturn(testCollector);
+        when(collectorMapper.toResponse(testCollector)).thenReturn(testCollectorResponse);
 
         // When
         CollectorResponse collectorResponse = collectorController.getCollectorByUsername("Bob");

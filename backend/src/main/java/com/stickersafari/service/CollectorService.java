@@ -12,4 +12,6 @@ public interface CollectorService {
     Collector save(Collector collector);
 
     List<Collector> findPotentialTradingPartners(Long offeredStickerId, Long receivedStickerId);
+    
+    void addStickersToCollector(Long collectorId, List<Long> stickerIds);
 }

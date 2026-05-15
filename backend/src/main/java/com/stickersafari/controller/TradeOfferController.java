@@ -1,109 +1,66 @@
 package com.stickersafari.controller;
 
 import com.stickersafari.dto.*;
-import com.stickersafari.entity.Collector;
-import com.stickersafari.entity.Sticker;
 import com.stickersafari.entity.TradeOffer;
+import com.stickersafari.mapper.TradeOfferMapper;
 import com.stickersafari.service.TradingService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("tradeoffer")
+@RequiredArgsConstructor
+@Slf4j
 public class TradeOfferController {
 
     private final TradingService tradingService;
-
-    public TradeOfferController(TradingService tradingService) {
-        this.tradingService = tradingService;
-    }
-
+    private final TradeOfferMapper tradeOfferMapper;
 
     @PostMapping("/specific")
-    public TradeOfferResponse manualTrade(@RequestBody SpecificTradeOfferRequest request) {
-        return mapTradeOfferToTradeOfferResponse(tradingService.sendSpecificTradeOffer(request));
+    public ResponseEntity<TradeOfferResponse> manualTrade(@Valid @RequestBody SpecificTradeOfferRequest request) {
+        log.info("Received manual trade request from {} to {}", request.getSenderId(), request.getReceiverId());
+        TradeOfferResponse response = tradeOfferMapper.toResponse(tradingService.sendSpecificTradeOffer(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/global")
-    public String globalTrade(@RequestBody GlobalTradeOfferRequest request) {
-        return tradingService.sendGlobalTradeOffer(request);
+    public ResponseEntity<String> globalTrade(@Valid @RequestBody GlobalTradeOfferRequest request) {
+        log.info("Received global trade request from {}", request.getSenderId());
+        String result = tradingService.sendGlobalTradeOffer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping("/received/{collectorId}")
-    public List<TradeOfferResponse> getPendingReceivedTradeOffers(@PathVariable("collectorId") Long collectorId) {
-       List<TradeOffer> tradeOffers = tradingService.getPendingReceivedTradeOffers(collectorId);
-       return mapTradeOffersToTradeOfferResponses(tradeOffers);
+    public ResponseEntity<List<TradeOfferResponse>> getPendingReceivedTradeOffers(@PathVariable("collectorId") Long collectorId) {
+        log.debug("Getting received trade offers for collector {}", collectorId);
+        List<TradeOffer> tradeOffers = tradingService.getPendingReceivedTradeOffers(collectorId);
+        return ResponseEntity.ok(tradeOfferMapper.toResponseList(tradeOffers));
     }
 
     @GetMapping("/sent/{collectorId}")
-    public List<TradeOfferResponse> getPendingSentTradeOffers(@PathVariable("collectorId") Long collectorId) {
-            List<TradeOffer> tradeOffers = tradingService.getPendingSentTradeOffers(collectorId);
-        return mapTradeOffersToTradeOfferResponses(tradeOffers);
+    public ResponseEntity<List<TradeOfferResponse>> getPendingSentTradeOffers(@PathVariable("collectorId") Long collectorId) {
+        log.debug("Getting sent trade offers for collector {}", collectorId);
+        List<TradeOffer> tradeOffers = tradingService.getPendingSentTradeOffers(collectorId);
+        return ResponseEntity.ok(tradeOfferMapper.toResponseList(tradeOffers));
     }
 
     @PostMapping("/requests/accept")
-    public TradeOfferResponse acceptPendingTradeOffer(@RequestBody AnswerPendingTradeOfferRequest request) throws Exception {
-        return mapTradeOfferToTradeOfferResponse(tradingService.acceptTradeOffer(request));
+    public ResponseEntity<TradeOfferResponse> acceptPendingTradeOffer(@Valid @RequestBody AnswerPendingTradeOfferRequest request) throws Exception {
+        log.info("Accepting trade offer request");
+        TradeOfferResponse response = tradeOfferMapper.toResponse(tradingService.acceptTradeOffer(request));
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/requests/refuse")
-    public TradeOfferResponse refusePendingTradeOffer(@RequestBody AnswerPendingTradeOfferRequest request) {
-        return mapTradeOfferToTradeOfferResponse(tradingService.refusePendingTradeOffer(request));
-    }
-
-    private List<TradeOfferResponse> mapTradeOffersToTradeOfferResponses(List<TradeOffer> tradeOffers){
-        List<TradeOfferResponse> tradeOfferResponses = new ArrayList<>();
-
-        for(TradeOffer tradeOffer : tradeOffers){
-            TradeOfferResponse tradeOfferResponse = new TradeOfferResponse();
-
-            tradeOfferResponse.setSender(mapCollectorToCollectorResponse(tradeOffer.getSender()));
-            tradeOfferResponse.setReceiver(mapCollectorToCollectorResponse(tradeOffer.getReceiver()));
-            tradeOfferResponse.setOfferedSticker(mapStickerToStickerResponse(tradeOffer.getOfferedSticker()));
-            tradeOfferResponse.setReceivedSticker(mapStickerToStickerResponse(tradeOffer.getReceivedSticker()));
-            tradeOfferResponse.setMessage(tradeOffer.getMessage());
-            tradeOfferResponse.setStatus(tradeOffer.getStatus());
-
-            tradeOfferResponses.add(tradeOfferResponse);
-        }
-
-        return tradeOfferResponses;
-    }
-
-    private TradeOfferResponse mapTradeOfferToTradeOfferResponse(TradeOffer tradeOffer){
-        TradeOfferResponse tradeOfferResponse = new TradeOfferResponse();
-
-        tradeOfferResponse.setSender(mapCollectorToCollectorResponse(tradeOffer.getSender()));
-        tradeOfferResponse.setReceiver(mapCollectorToCollectorResponse(tradeOffer.getReceiver()));
-        tradeOfferResponse.setOfferedSticker(mapStickerToStickerResponse(tradeOffer.getOfferedSticker()));
-        tradeOfferResponse.setReceivedSticker(mapStickerToStickerResponse(tradeOffer.getReceivedSticker()));
-        tradeOfferResponse.setMessage(tradeOffer.getMessage());
-        tradeOfferResponse.setStatus(tradeOffer.getStatus());
-
-        return tradeOfferResponse;
-    }
-
-    private CollectorResponse mapCollectorToCollectorResponse(Collector collector) {
-        CollectorResponse collectorResponse = new CollectorResponse();
-
-        collectorResponse.setId(collector.getId());
-        collectorResponse.setUsername(collector.getUsername());
-
-        return collectorResponse;
-    }
-
-    private StickerResponse mapStickerToStickerResponse(Sticker sticker) {
-        StickerResponse stickerResponse = new StickerResponse();
-
-        stickerResponse.setName(sticker.getName());
-        stickerResponse.setLatinName(sticker.getLatinName());
-        stickerResponse.setHabitat(sticker.getHabitat());
-        stickerResponse.setDescription(sticker.getDescription());
-        stickerResponse.setId(sticker.getId());
-        stickerResponse.setSrc(sticker.getSrc());
-
-        return stickerResponse;
+    public ResponseEntity<TradeOfferResponse> refusePendingTradeOffer(@Valid @RequestBody AnswerPendingTradeOfferRequest request) {
+        log.info("Refusing trade offer request");
+        TradeOfferResponse response = tradeOfferMapper.toResponse(tradingService.refusePendingTradeOffer(request));
+        return ResponseEntity.ok(response);
     }
 }
