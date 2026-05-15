@@ -185,9 +185,9 @@ const generateMockAlbums = (): Album[] => {
 };
 
 const mockOpenPack = (albumId: string, stickerNumber: number): Sticker[] => {
-    var openedStickers = []
+    const openedStickers: Sticker[] = []
 
-    for (var i = 0; i < stickerNumber; i++) {
+    for (let i = 0; i < stickerNumber; i++) {
         switch(albumId){
             case "1":
                 openedStickers.push(ZCData[Math.floor(Math.random() * ZCData.length)]);
@@ -196,7 +196,6 @@ const mockOpenPack = (albumId: string, stickerNumber: number): Sticker[] => {
                 openedStickers.push(ZvjericiData[Math.floor(Math.random() * ZvjericiData.length)]);
                 break;
         }
-        openedStickers.push()
     }
 
     return openedStickers;
