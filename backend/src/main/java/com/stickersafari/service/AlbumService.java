@@ -18,4 +18,8 @@ public interface AlbumService {
     Album createAlbum(AlbumRequest request);
     Album updateAlbum(Long albumId, AlbumRequest request);
     void deleteAlbum(Long albumId);
+    
+    // Album completion
+    boolean canCompleteAlbum(Long albumId, Long collectorId);
+    void completeAlbum(Long albumId, Long collectorId);
 }

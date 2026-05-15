@@ -4,18 +4,23 @@ import com.stickersafari.dto.AlbumCompletionResponse;
 import com.stickersafari.dto.AlbumRequest;
 import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
+import com.stickersafari.entity.CompletedAlbum;
+import com.stickersafari.entity.Notification;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.exception.EntityNotFoundException;
 import com.stickersafari.mapper.StickerMapper;
 import com.stickersafari.repository.AlbumRepository;
+import com.stickersafari.repository.CompletedAlbumRepository;
 import com.stickersafari.repository.StickerRepository;
 import com.stickersafari.service.AlbumService;
 import com.stickersafari.service.CollectorService;
+import com.stickersafari.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +35,19 @@ public class AlbumServiceImpl implements AlbumService {
     private final AlbumRepository albumRepository;
     private final StickerMapper stickerMapper;
     private final StickerRepository stickerRepository;
+    private final CompletedAlbumRepository completedAlbumRepository;
+    private final NotificationService notificationService;
 
     public AlbumServiceImpl(@Lazy CollectorService collectorService, AlbumRepository albumRepository, 
-                            StickerMapper stickerMapper, StickerRepository stickerRepository) {
+                            StickerMapper stickerMapper, StickerRepository stickerRepository,
+                            CompletedAlbumRepository completedAlbumRepository,
+                            @Lazy NotificationService notificationService) {
         this.collectorService = collectorService;
         this.albumRepository = albumRepository;
         this.stickerMapper = stickerMapper;
         this.stickerRepository = stickerRepository;
+        this.completedAlbumRepository = completedAlbumRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -148,5 +159,57 @@ public class AlbumServiceImpl implements AlbumService {
         }
         
         albumRepository.delete(album);
+    }
+
+    @Override
+    public boolean canCompleteAlbum(Long albumId, Long collectorId) {
+        log.debug("Checking if collector {} can complete album {}", collectorId, albumId);
+        Album album = getAlbum(albumId);
+        List<Sticker> missingStickers = getMissingStickers(album, collectorId);
+        return missingStickers.isEmpty();
+    }
+
+    @Override
+    @Transactional
+    public void completeAlbum(Long albumId, Long collectorId) {
+        log.info("Completing album {} for collector {}", albumId, collectorId);
+        
+        Album album = getAlbum(albumId);
+        Collector collector = collectorService.findById(collectorId);
+        
+        // Check if collector has all stickers
+        if (!canCompleteAlbum(albumId, collectorId)) {
+            throw new IllegalStateException("Cannot complete album - missing stickers");
+        }
+        
+        // Remove one copy of each sticker from the album
+        for (Sticker sticker : album.getStickers()) {
+            try {
+                collector.removeSticker(sticker.getId());
+            } catch (Exception e) {
+                throw new IllegalStateException("Error removing sticker: " + e.getMessage());
+            }
+        }
+        
+        // Add one star
+        collector.setStars(collector.getStars() != null ? collector.getStars() + 1 : 1);
+        collectorService.save(collector);
+        
+        // Record completion
+        CompletedAlbum completedAlbum = new CompletedAlbum();
+        completedAlbum.setCollector(collector);
+        completedAlbum.setAlbum(album);
+        completedAlbum.setCompletedAt(LocalDateTime.now());
+        completedAlbumRepository.save(completedAlbum);
+        
+        // Send notification
+        Notification notification = new Notification();
+        notification.setRecipient(collector);
+        notification.setMessage(String.format("Congratulations! You completed the album '%s' and earned a star! ⭐", album.getName()));
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+        notificationService.saveNotification(notification);
+        
+        log.info("Album {} completed by collector {}. Stars: {}", albumId, collectorId, collector.getStars());
     }
 }

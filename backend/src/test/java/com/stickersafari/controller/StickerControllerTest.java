@@ -5,7 +5,9 @@ import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.mapper.StickerMapper;
+import com.stickersafari.service.AlbumService;
 import com.stickersafari.service.CollectorService;
+import com.stickersafari.service.NotificationService;
 import com.stickersafari.service.StickerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,12 @@ class StickerControllerTest {
     
     @Mock
     private StickerMapper stickerMapper;
+    
+    @Mock
+    private AlbumService albumService;
+    
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private StickerController stickerController;

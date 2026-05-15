@@ -37,6 +37,9 @@ public class Collector {
     @Column(name = "daily_sticker_count")
     private Integer dailyStickerCount = 0;
 
+    @Column(name = "stars")
+    private Integer stars = 0;
+
     public void addSticker(Long stickerId) {
         if (this.ownedStickers.containsKey(stickerId)){
             this.ownedStickers.put(stickerId, this.ownedStickers.get(stickerId) + 1);

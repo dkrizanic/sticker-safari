@@ -64,4 +64,12 @@ public class AlbumController {
         albumService.deleteAlbum(albumId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{albumId}/complete/collector/{collectorId}")
+    public ResponseEntity<Void> completeAlbum(@PathVariable("albumId") Long albumId,
+                                               @PathVariable("collectorId") Long collectorId) {
+        log.info("Collector {} completing album {}", collectorId, albumId);
+        albumService.completeAlbum(albumId, collectorId);
+        return ResponseEntity.ok().build();
+    }
 }
