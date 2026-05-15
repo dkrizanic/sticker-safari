@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +30,12 @@ public class Collector {
     @MapKeyColumn(name = "sticker_id")
     @Column(name = "quantity")
     private Map<Long, Integer> ownedStickers = new HashMap<>();
+
+    @Column(name = "last_pack_open_date")
+    private LocalDate lastPackOpenDate;
+
+    @Column(name = "daily_sticker_count")
+    private Integer dailyStickerCount = 0;
 
     public void addSticker(Long stickerId) {
         if (this.ownedStickers.containsKey(stickerId)){

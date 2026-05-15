@@ -1,6 +1,7 @@
 package com.stickersafari.config;
 
 import com.stickersafari.dto.ErrorResponse;
+import com.stickersafari.exception.DailyLimitExceededException;
 import com.stickersafari.exception.EntityNotFoundException;
 import com.stickersafari.exception.StickerNotOwnedException;
 import com.stickersafari.exception.TradeOfferException;
@@ -49,6 +50,15 @@ public class GlobalExceptionHandler {
         error.setStatus(HttpStatus.BAD_REQUEST.value());
         error.setTimestamp(LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+    
+    @ExceptionHandler(DailyLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleDailyLimitExceeded(DailyLimitExceededException ex) {
+        log.error("Daily limit exceeded: {}", ex.getMessage());
+        ErrorResponse error = new ErrorResponse(ex.getMessage());
+        error.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+        error.setTimestamp(LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
     }
     
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -74,6 +74,7 @@ class StickerControllerTest {
     @DisplayName("Bug Fix: openPack should return mutable list (not List.of())")
     void testOpenPackReturnsMutableList() {
         // Given
+        when(collectorService.findById(anyLong())).thenReturn(testCollector);
         when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
         when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
 
@@ -102,6 +103,7 @@ class StickerControllerTest {
         int requestedSize = 3;
         List<Sticker> subset = testStickers.subList(0, requestedSize);
         List<StickerResponse> subsetResponses = testStickerResponses.subList(0, requestedSize);
+        when(collectorService.findById(anyLong())).thenReturn(testCollector);
         when(stickerService.openPack(anyLong(), anyLong(), eq(requestedSize))).thenReturn(subset);
         when(stickerMapper.toResponseList(subset)).thenReturn(subsetResponses);
 
@@ -119,6 +121,7 @@ class StickerControllerTest {
     @DisplayName("openPack should add stickers to collector's owned stickers")
     void testOpenPackAddsStickersToCollector() {
         // Given
+        when(collectorService.findById(anyLong())).thenReturn(testCollector);
         when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
         when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
 
@@ -133,6 +136,7 @@ class StickerControllerTest {
     @DisplayName("openPack should handle service exceptions")
     void testOpenPackCollectorNotFound() {
         // Given
+        when(collectorService.findById(anyLong())).thenReturn(testCollector);
         when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
         doThrow(new NoSuchElementException("Collector not found"))
             .when(collectorService).addStickersToCollector(anyLong(), anyList());
