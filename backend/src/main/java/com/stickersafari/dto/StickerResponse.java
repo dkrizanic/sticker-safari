@@ -9,6 +9,7 @@ public class StickerResponse {
     private String latinName;
     private String description;
     private String habitat;
+    private String src;
 
     private AlbumResponse album;
 }
