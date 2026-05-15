@@ -6,7 +6,7 @@ import com.stickersafari.entity.Sticker;
 import com.stickersafari.repository.AlbumRepository;
 import com.stickersafari.service.AlbumService;
 import com.stickersafari.service.CollectorService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,12 +14,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AlbumServiceImpl implements AlbumService {
 
     private final CollectorService collectorService;
-
     private final AlbumRepository albumRepository;
+
+    public AlbumServiceImpl(@Lazy CollectorService collectorService, AlbumRepository albumRepository) {
+        this.collectorService = collectorService;
+        this.albumRepository = albumRepository;
+    }
 
     @Override
     public List<Sticker> getMissingStickers(Album album, Long collectorId) {
