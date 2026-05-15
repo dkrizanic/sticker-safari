@@ -50,16 +50,23 @@ class AlbumCrudIntegrationTest {
     @Test
     @DisplayName("Should retrieve all albums")
     void testGetAllAlbums() {
-        // Given - Albums exist from seed data (African Safari, Ocean Life)
+        // Given - Create test albums
+        AlbumRequest request1 = new AlbumRequest();
+        request1.setName("Test Album 1");
+        albumService.createAlbum(request1);
+
+        AlbumRequest request2 = new AlbumRequest();
+        request2.setName("Test Album 2");
+        albumService.createAlbum(request2);
 
         // When
         List<Album> albums = albumService.getAllAlbums();
 
         // Then
-        assertThat(albums).isNotEmpty();
+        assertThat(albums).hasSizeGreaterThanOrEqualTo(2);
         assertThat(albums)
                 .extracting(Album::getName)
-                .contains("African Safari", "Ocean Life");
+                .contains("Test Album 1", "Test Album 2");
     }
 
     @Test

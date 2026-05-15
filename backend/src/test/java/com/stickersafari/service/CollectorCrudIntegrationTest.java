@@ -52,16 +52,23 @@ class CollectorCrudIntegrationTest {
     @Test
     @DisplayName("Should retrieve all collectors")
     void testGetAllCollectors() {
-        // Given - Collectors exist from seed data (Bob, Jack, Anne, Ema)
+        // Given - Create test collectors
+        CollectorRequest request1 = new CollectorRequest();
+        request1.setUsername("TestUser1");
+        collectorService.createCollector(request1);
+
+        CollectorRequest request2 = new CollectorRequest();
+        request2.setUsername("TestUser2");
+        collectorService.createCollector(request2);
 
         // When
         List<Collector> collectors = collectorService.getAllCollectors();
 
         // Then
-        assertThat(collectors).isNotEmpty();
+        assertThat(collectors).hasSizeGreaterThanOrEqualTo(2);
         assertThat(collectors)
                 .extracting(Collector::getUsername)
-                .contains("Bob", "Jack", "Anne", "Ema");
+                .contains("TestUser1", "TestUser2");
     }
 
     @Test

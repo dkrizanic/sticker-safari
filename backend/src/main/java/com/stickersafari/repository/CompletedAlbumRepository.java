@@ -28,6 +28,7 @@ public interface CompletedAlbumRepository extends JpaRepository<CompletedAlbum, 
     @Query("""
         SELECT c.id, c.username, c.stars
         FROM Collector c
+        WHERE c.stars > 0
         ORDER BY c.stars DESC
         """)
     List<Object[]> findTopCollectorsAllTime(Pageable pageable);
