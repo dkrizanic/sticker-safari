@@ -1,0 +1,34 @@
+# Java / Maven
+backend/target/
+backend/*.class
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+*.jar
+*.war
+*.ear
+*.log
+*.iml
+.idea/
+.vscode/
+.DS_Store
+
+# Node / React
+front/sticker-safari-frontend/node_modules/
+front/sticker-safari-frontend/build/
+front/sticker-safari-frontend/.env.local
+front/sticker-safari-frontend/.env.development.local
+front/sticker-safari-frontend/.env.test.local
+front/sticker-safari-frontend/.env.production.local
+front/sticker-safari-frontend/npm-debug.log*
+front/sticker-safari-frontend/yarn-debug.log*
+front/sticker-safari-frontend/yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
+*~

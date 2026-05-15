@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="addTradeOfferTable" author="croz">
+        <createTable tableName="trade_offer">
+            <column name="sender_id" type="BIGINT"/>
+            <column name="receiver_id" type="BIGINT"/>
+            <column name="offered_sticker_id" type="BIGINT"/>
+            <column name="received_sticker_id" type="BIGINT"/>
+            <column name="message" type="VARCHAR(255)"/>
+            <column name="status" type="VARCHAR(50)"/>
+        </createTable>
+        <addForeignKeyConstraint  baseColumnNames="sender_id"
+                                  baseTableName="trade_offer"
+                                  constraintName="fk_trade_offer_sender_id_collector"
+                                  onDelete="CASCADE"
+                                  onUpdate="RESTRICT"
+                                  referencedColumnNames="id"
+                                  referencedTableName="collector"/>
+        <addForeignKeyConstraint  baseColumnNames="receiver_id"
+                                  baseTableName="trade_offer"
+                                  constraintName="fk_tade_offer_receiver_id_collector"
+                                  onDelete="CASCADE"
+                                  onUpdate="RESTRICT"
+                                  referencedColumnNames="id"
+                                  referencedTableName="collector"/>
+        <addForeignKeyConstraint  baseColumnNames="offered_sticker_id"
+                                  baseTableName="trade_offer"
+                                  constraintName="fk_trade_offer_offered_sticker_id_sticker"
+                                  onDelete="CASCADE"
+                                  onUpdate="RESTRICT"
+                                  referencedColumnNames="id"
+                                  referencedTableName="sticker"/>
+        <addForeignKeyConstraint  baseColumnNames="received_sticker_id"
+                                  baseTableName="trade_offer"
+                                  constraintName="fk_trade_offer_received_sticker_id_sticker"
+                                  onDelete="CASCADE"
+                                  onUpdate="RESTRICT"
+                                  referencedColumnNames="id"
+                                  referencedTableName="sticker"/>
+    </changeSet>
+
+</databaseChangeLog>
