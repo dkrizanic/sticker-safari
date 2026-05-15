@@ -4,10 +4,12 @@ import com.stickersafari.entity.Notification;
 import com.stickersafari.repository.NotificationRepository;
 import com.stickersafari.service.NotificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Service
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
