@@ -54,6 +54,7 @@ public class AlbumController {
             stickerResponse.setHabitat(sticker.getHabitat());
             stickerResponse.setDescription(sticker.getDescription());
             stickerResponse.setId(sticker.getId());
+            stickerResponse.setSrc(sticker.getSrc());
 
             stickerResponses.add(stickerResponse);
         }
@@ -64,6 +65,7 @@ public class AlbumController {
     private AlbumResponse mapAlbumToAlbumResponse(Album album) {
         AlbumResponse albumResponse = new AlbumResponse();
 
+        albumResponse.setId(album.getId());
         albumResponse.setName(album.getName());
         albumResponse.setStickers(mapStickersToStickerResponses(album.getStickers()));
 

@@ -88,6 +88,7 @@ public class TradeOfferController {
     private CollectorResponse mapCollectorToCollectorResponse(Collector collector) {
         CollectorResponse collectorResponse = new CollectorResponse();
 
+        collectorResponse.setId(collector.getId());
         collectorResponse.setUsername(collector.getUsername());
 
         return collectorResponse;
@@ -101,6 +102,7 @@ public class TradeOfferController {
         stickerResponse.setHabitat(sticker.getHabitat());
         stickerResponse.setDescription(sticker.getDescription());
         stickerResponse.setId(sticker.getId());
+        stickerResponse.setSrc(sticker.getSrc());
 
         return stickerResponse;
     }
