@@ -1,5 +1,6 @@
 package com.stickersafari.dto;
 
+import com.stickersafari.entity.TradeOfferStatus;
 import lombok.Data;
 
 @Data
@@ -9,5 +10,5 @@ public class TradeOfferResponse {
     private StickerResponse offeredSticker;
     private StickerResponse receivedSticker;
     private String message;
-    private String status;
+    private TradeOfferStatus status;
 }

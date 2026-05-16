@@ -2,26 +2,51 @@ package com.stickersafari.service.impl;
 
 import com.stickersafari.dto.StickerRequest;
 import com.stickersafari.entity.Album;
+import com.stickersafari.entity.Collector;
+import com.stickersafari.entity.Notification;
 import com.stickersafari.entity.Sticker;
+import com.stickersafari.exception.DailyLimitExceededException;
 import com.stickersafari.exception.EntityNotFoundException;
 import com.stickersafari.repository.AlbumRepository;
 import com.stickersafari.repository.StickerRepository;
+import com.stickersafari.service.AlbumService;
+import com.stickersafari.service.CollectorService;
+import com.stickersafari.service.NotificationService;
 import com.stickersafari.service.StickerService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
 public class StickerServiceImpl implements StickerService {
 
     private final StickerRepository stickerRepository;
     private final AlbumRepository albumRepository;
+    private final CollectorService collectorService;
+    private final AlbumService albumService;
+    private final NotificationService notificationService;
+
+    public StickerServiceImpl(StickerRepository stickerRepository, 
+                              AlbumRepository albumRepository,
+                              @Lazy CollectorService collectorService,
+                              AlbumService albumService,
+                              NotificationService notificationService) {
+        this.stickerRepository = stickerRepository;
+        this.albumRepository = albumRepository;
+        this.collectorService = collectorService;
+        this.albumService = albumService;
+        this.notificationService = notificationService;
+    }
 
     @Override
     public Sticker findOne(Long stickerId) {
@@ -60,6 +85,82 @@ public class StickerServiceImpl implements StickerService {
         }
         
         return randomStickers;
+    }
+
+    @Override
+    @Transactional
+    public List<Sticker> openPackForCollector(Long albumId, Long collectorId, int size) {
+        log.info("Opening pack for collector {} from album {}, size: {}", collectorId, albumId, size);
+        
+        // Validate and check daily limit
+        Collector collector = collectorService.findById(collectorId);
+        validateDailyLimit(collector, size);
+        
+        // Open pack
+        List<Sticker> randomStickers = openPack(albumId, collectorId, size);
+        
+        // Add stickers to collector
+        List<Long> stickerIds = randomStickers.stream()
+                .map(Sticker::getId)
+                .collect(Collectors.toList());
+        collectorService.addStickersToCollector(collectorId, stickerIds);
+        
+        // Update daily counter
+        updateDailyCounter(collector, size);
+        
+        // Check for completable albums and send notifications
+        checkAndNotifyCompletableAlbums(collector, randomStickers);
+        
+        return randomStickers;
+    }
+
+    private void validateDailyLimit(Collector collector, int size) {
+        LocalDate today = LocalDate.now();
+        
+        // Reset counter if it's a new day
+        if (collector.getLastPackOpenDate() == null || !collector.getLastPackOpenDate().equals(today)) {
+            collector.setLastPackOpenDate(today);
+            collector.setDailyStickerCount(0);
+        }
+        
+        // Check if opening this pack would exceed daily limit
+        int currentCount = collector.getDailyStickerCount() != null ? collector.getDailyStickerCount() : 0;
+        if (currentCount + size > 20) {
+            int remaining = 20 - currentCount;
+            throw new DailyLimitExceededException(
+                String.format("Daily limit exceeded. You can only open %d more sticker(s) today. Limit resets at midnight.", remaining)
+            );
+        }
+    }
+
+    private void updateDailyCounter(Collector collector, int size) {
+        int currentCount = collector.getDailyStickerCount() != null ? collector.getDailyStickerCount() : 0;
+        collector.setDailyStickerCount(currentCount + size);
+        collectorService.save(collector);
+    }
+
+    private void checkAndNotifyCompletableAlbums(Collector collector, List<Sticker> newStickers) {
+        // Get unique albums from the newly opened stickers
+        Set<Long> albumIds = new HashSet<>();
+        for (Sticker sticker : newStickers) {
+            if (sticker.getAlbum() != null) {
+                albumIds.add(sticker.getAlbum().getId());
+            }
+        }
+        
+        // Check each album if it can be completed
+        for (Long albumId : albumIds) {
+            if (albumService.canCompleteAlbum(albumId, collector.getId())) {
+                Album album = albumService.getAlbum(albumId);
+                Notification notification = new Notification();
+                notification.setRecipient(collector);
+                notification.setMessage(String.format("Great news! You have collected all stickers for album '%s'. You can now complete it to earn a star! ⭐", album.getName()));
+                notification.setCreatedAt(LocalDateTime.now());
+                notification.setRead(false);
+                notificationService.saveNotification(notification);
+                log.info("Collector {} can complete album {}", collector.getId(), albumId);
+            }
+        }
     }
 
     @Override

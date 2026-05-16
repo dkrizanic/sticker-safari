@@ -13,6 +13,11 @@ public interface StickerService {
     
     List<Sticker> openPack(Long albumId, Long userId, int size);
     
+    /**
+     * Opens a pack for a collector with daily limit validation and album completion checks
+     */
+    List<Sticker> openPackForCollector(Long albumId, Long collectorId, int size);
+    
     // CRUD operations
     List<Sticker> getAllStickers();
     Sticker createSticker(StickerRequest request);

@@ -80,7 +80,7 @@ const apiService = {
 
     // Sticker endpoints
     openPack: async (albumId: number, userId: number, size: number = 3): Promise<StickerResponse[]> => {
-        const response = await api.get(`/sticker/open/${albumId}/collector/${userId}?size=${size}`);
+        const response = await api.post(`/stickers/open/${albumId}/collector/${userId}?size=${size}`);
         return response.data;
     },
 

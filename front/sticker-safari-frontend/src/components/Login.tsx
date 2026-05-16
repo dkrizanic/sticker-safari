@@ -66,9 +66,6 @@ const Login = (): JSX.Element => {
                 >
                     {loading ? 'Logging in...' : 'Login'}
                 </button>
-                <p className="mt-4 text-sm text-gray-600">
-                    Available users: Bob, Jack, Anne, Ema
-                </p>
             </div>
         </div>
     );
