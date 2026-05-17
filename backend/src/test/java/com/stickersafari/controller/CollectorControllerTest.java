@@ -133,7 +133,7 @@ class CollectorControllerTest {
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
@@ -179,7 +179,7 @@ class CollectorControllerTest {
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
@@ -225,7 +225,7 @@ class CollectorControllerTest {
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         verify(collectorService, times(1)).getAllCollectorsWithPagination(argThat(pageable -> 
             pageable.getSort().getOrderFor("username").getDirection() == Sort.Direction.DESC

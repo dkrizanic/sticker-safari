@@ -156,7 +156,7 @@ class StickerControllerTest {
 
     @Test
     @DisplayName("Admin endpoint: Get paginated stickers without filters")
-    void testGetStickersPaginatedNoFilters() {
+    void testgetStickersWithPaginationNoFilters() {
         // Given
         PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
         Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
@@ -171,13 +171,13 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
             0, 10, "id", "asc", null, null
         );
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
@@ -219,13 +219,13 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
             0, 10, "name", "asc", searchQuery, null
         );
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
@@ -241,7 +241,7 @@ class StickerControllerTest {
 
     @Test
     @DisplayName("Admin endpoint: Filter stickers by album")
-    void testGetStickersPaginatedByAlbum() {
+    void testgetStickersWithPaginationByAlbum() {
         // Given
         Long albumId = 1L;
         PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
@@ -257,13 +257,13 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
             0, 10, "id", "asc", null, albumId
         );
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
@@ -274,7 +274,7 @@ class StickerControllerTest {
 
     @Test
     @DisplayName("Admin endpoint: Sort stickers descending")
-    void testGetStickersPaginatedSortDescending() {
+    void testgetStickersWithPaginationSortDescending() {
         // Given
         PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "name"));
         Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
@@ -289,13 +289,13 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
             0, 10, "name", "desc", null, null
         );
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         verify(stickerService, times(1)).getAllStickersWithPagination(argThat(pageable -> 
             pageable.getSort().getOrderFor("name").getDirection() == Sort.Direction.DESC
@@ -328,13 +328,13 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
             0, 10, "id", "asc", searchQuery, albumId
         );
 
         // Then
         assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+        assertEquals(200, responseEntity.getStatusCode().value());
         
         // Note: Current implementation prioritizes search over album filter
         verify(stickerService, times(1)).searchStickers(eq(searchQuery), any());
@@ -343,7 +343,7 @@ class StickerControllerTest {
 
     @Test
     @DisplayName("Admin endpoint: Pagination with different page sizes")
-    void testGetStickersPaginatedDifferentPageSizes() {
+    void testgetStickersWithPaginationDifferentPageSizes() {
         // Given
         int pageSize = 5;
         PageRequest pageRequest = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
@@ -359,7 +359,7 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
             0, pageSize, "id", "asc", null, null
         );
 
