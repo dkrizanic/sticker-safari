@@ -23,4 +23,5 @@ export interface User {
   id?: number;
   username: string;
   role?: 'COLLECTOR' | 'ADMIN';
+  stars?: number;
 }

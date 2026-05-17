@@ -82,7 +82,7 @@ public class AlbumServiceImpl implements AlbumService {
 
     private List<Sticker> getUnownedStickersOfAlbum(List<Sticker> albumStickers, Map<Long, Integer> ownedStickers) {
         return albumStickers.stream()
-                .filter((sticker) -> ownedStickers.containsKey(sticker.getId()))
+                .filter((sticker) -> !ownedStickers.containsKey(sticker.getId()))
                 .collect(Collectors.toList());
     }
 
@@ -197,6 +197,9 @@ public class AlbumServiceImpl implements AlbumService {
             throw new IllegalStateException("Cannot complete album - missing stickers");
         }
         
+        // Count how many distinct collectors have completed this album before
+        long previousCompletions = completedAlbumRepository.countDistinctCollectorsByAlbum(albumId);
+        
         // Remove one copy of each sticker from the album
         for (Sticker sticker : album.getStickers()) {
             try {
@@ -206,8 +209,12 @@ public class AlbumServiceImpl implements AlbumService {
             }
         }
         
-        // Add one star
-        collector.setStars(collector.getStars() != null ? collector.getStars() + 1 : 1);
+        // Only award star if this collector is among the first 3 to complete this album
+        boolean earnedStar = false;
+        if (previousCompletions < 3) {
+            collector.setStars(collector.getStars() != null ? collector.getStars() + 1 : 1);
+            earnedStar = true;
+        }
         collectorService.save(collector);
         
         // Record completion
@@ -220,11 +227,16 @@ public class AlbumServiceImpl implements AlbumService {
         // Send notification
         Notification notification = new Notification();
         notification.setRecipient(collector);
-        notification.setMessage(String.format("Congratulations! You completed the album '%s' and earned a star! ⭐", album.getName()));
+        if (earnedStar) {
+            long position = previousCompletions + 1;
+            notification.setMessage(String.format("Congratulations! You're #%d to complete '%s' and earned a ⭐ STAR! (Worth 5 points)", position, album.getName()));
+        } else {
+            notification.setMessage(String.format("Congratulations! You completed the album '%s'! (+1 point)", album.getName()));
+        }
         notification.setCreatedAt(LocalDateTime.now());
         notification.setRead(false);
         notificationService.saveNotification(notification);
         
-        log.info("Album {} completed by collector {}. Stars: {}", albumId, collectorId, collector.getStars());
+        log.info("Album {} completed by collector {}. Stars: {}, Earned star: {}", albumId, collectorId, collector.getStars(), earnedStar);
     }
 }

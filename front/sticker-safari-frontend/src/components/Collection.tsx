@@ -10,7 +10,7 @@ const Collection = (): JSX.Element => {
 
     const [albums, setAlbums] = useState<Album[]>([]);
     const [ownedStickers, setOwnedStickers] = useState<number[]>([]);
-    const {currentUser} = useUser();
+    const {currentUser, login} = useUser();
     const navigate = useNavigate();
 
     // All hooks must be called before any conditional returns
@@ -51,6 +51,22 @@ const Collection = (): JSX.Element => {
         }
     }, [currentUser, navigate]);
 
+    const handleAlbumCompleted = async () => {
+        // Refresh user data to update stars count
+        if (currentUser?.id && currentUser?.username) {
+            try {
+                const updatedCollector = await apiService.getCollector(currentUser.id);
+                login({ ...currentUser, stars: updatedCollector.stars || 0 });
+                
+                // Refresh owned stickers
+                const stickers = await apiService.getCollectorStickers(currentUser.id);
+                setOwnedStickers(stickers);
+            } catch (error) {
+                console.error('Failed to refresh user data:', error);
+            }
+        }
+    };
+
     // Don't render if admin
     if (currentUser?.role === 'ADMIN') {
         return <></>;
@@ -62,7 +78,9 @@ const Collection = (): JSX.Element => {
                 <AlbumCard 
                     key={album.id}
                     album={album}
-                    ownedStickers={ownedStickers}/>
+                    ownedStickers={ownedStickers}
+                    onAlbumCompleted={handleAlbumCompleted}
+                />
             ))}
         </div>
     );

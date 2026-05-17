@@ -10,5 +10,7 @@ import lombok.NoArgsConstructor;
 public class RankingEntry {
     private Long collectorId;
     private String username;
-    private Long completions; // or stars for all-time
+    private Long completions;
+    private Long stars;
+    private Long score; // (stars * 5) + completions
 }

@@ -11,6 +11,7 @@ import AlbumManagement from "./components/admin/AlbumManagement"
 import StickerManagement from "./components/admin/StickerManagement"
 import CollectorManagement from "./components/admin/CollectorManagement"
 import Profile from "./components/Profile"
+import Leaderboard from "./components/Leaderboard"
 import { UserProvider, useUser } from './context/UserContext';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/ToastContainer';
@@ -37,6 +38,7 @@ function AppContent(): JSX.Element {
         <Route path="/trading" element={<Trading/>} />
         <Route path="/pack-opening" element={<PackOpening/>}/>
         <Route path="/profile" element={<Profile/>}/>
+        <Route path="/leaderboard" element={<Leaderboard/>}/>
         <Route path="/admin" element={<AdminDashboard/>}/>
         <Route path="/admin/albums" element={<AlbumManagement/>}/>
         <Route path="/admin/stickers" element={<StickerManagement/>}/>

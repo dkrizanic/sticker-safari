@@ -51,7 +51,7 @@ const Login = (): JSX.Element => {
             }
             
             // Authentication successful for collector
-            login({ id: collector.id, username: collector.username, role: 'COLLECTOR' });
+            login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
             navigate('/collection');
             
         } catch (collectorError: any) {
@@ -108,7 +108,7 @@ const Login = (): JSX.Element => {
             sessionStorage.setItem('password', 'collector');
             
             const collector = await apiService.createCollector(username);
-            login({ id: collector.id, username: collector.username });
+            login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
             navigate('/collection');
         } catch (err: any) {
             console.error('Registration failed:', err);

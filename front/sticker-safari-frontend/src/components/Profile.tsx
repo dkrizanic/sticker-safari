@@ -92,6 +92,33 @@ const Profile = (): JSX.Element => {
                         👤 My Profile
                     </h1>
 
+                    {/* Stats Section */}
+                    <div className="mb-8 pb-8 border-b border-gray-200">
+                        <h2 className="text-xl font-semibold text-gray-700 mb-4">
+                            Statistics
+                        </h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-lg p-4 text-white shadow-md">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm opacity-90">Stars Earned</p>
+                                        <p className="text-3xl font-bold">{currentUser.stars || 0}</p>
+                                    </div>
+                                    <div className="text-4xl">⭐</div>
+                                </div>
+                            </div>
+                            <div className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-lg p-4 text-white shadow-md">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm opacity-90">Albums Completed</p>
+                                        <p className="text-3xl font-bold">{currentUser.stars || 0}</p>
+                                    </div>
+                                    <div className="text-4xl">📚</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Update Username Section */}
                     <div className="mb-8 pb-8 border-b border-gray-200">
                         <h2 className="text-xl font-semibold text-gray-700 mb-4">

@@ -58,6 +58,7 @@ export interface StickerWithQuantity {
 export interface CollectorResponse {
     id: number;
     username: string;
+    stars?: number;
     stickers?: StickerWithQuantity[];
 }
 
@@ -226,6 +227,64 @@ const apiService = {
     deleteCollector: async (id: number): Promise<void> => {
         await api.delete(`/collectors/${id}`);
     },
+
+    // Album Completion endpoints
+    completeAlbum: async (albumId: number, collectorId: number): Promise<void> => {
+        await api.post(`/album/${albumId}/complete/collector/${collectorId}`);
+    },
+
+    // Ranking endpoints
+    getMonthlyRanking: async (
+        year: number,
+        month: number,
+        page: number = 0,
+        size: number = 10,
+        search?: string
+    ): Promise<PagedRankingResponse> => {
+        const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+        if (search) params.append('search', search);
+        const response = await api.get(`/rankings/monthly/${year}/${month}?${params}`);
+        return response.data;
+    },
+
+    getYearlyRanking: async (
+        year: number,
+        page: number = 0,
+        size: number = 10,
+        search?: string
+    ): Promise<PagedRankingResponse> => {
+        const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+        if (search) params.append('search', search);
+        const response = await api.get(`/rankings/yearly/${year}?${params}`);
+        return response.data;
+    },
+
+    getAllTimeRanking: async (
+        page: number = 0,
+        size: number = 10,
+        search?: string
+    ): Promise<PagedRankingResponse> => {
+        const params = new URLSearchParams({ page: page.toString(), size: size.toString() });
+        if (search) params.append('search', search);
+        const response = await api.get(`/rankings/all-time?${params}`);
+        return response.data;
+    },
 };
+
+export interface PagedRankingResponse {
+    rankings: RankingEntry[];
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+}
+
+export interface RankingEntry {
+    collectorId: number;
+    username: string;
+    completions: number;
+    stars: number;
+    score: number;
+}
 
 export default apiService;

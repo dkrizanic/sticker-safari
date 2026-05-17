@@ -1,5 +1,6 @@
 package com.stickersafari.service.impl;
 
+import com.stickersafari.dto.PagedRankingResponse;
 import com.stickersafari.dto.RankingEntry;
 import com.stickersafari.repository.CompletedAlbumRepository;
 import com.stickersafari.service.RankingService;
@@ -23,6 +24,63 @@ public class RankingServiceImpl implements RankingService {
     private final CompletedAlbumRepository completedAlbumRepository;
 
     @Override
+    public PagedRankingResponse getMonthlyRanking(int year, int month, int page, int size, String search) {
+        log.info("Getting monthly ranking for {}-{} with pagination (page={}, size={}, search={})", year, month, page, size, search);
+        
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDateTime startDate = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime endDate = yearMonth.atEndOfMonth().atTime(23, 59, 59);
+        
+        String searchTerm = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        
+        List<Object[]> results = completedAlbumRepository.findTopCollectorsByPeriodWithSearch(
+            startDate, endDate, searchTerm, PageRequest.of(page, size));
+        
+        long totalItems = completedAlbumRepository.countCollectorsByPeriodWithSearch(startDate, endDate, searchTerm);
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+        
+        List<RankingEntry> rankings = mapToRankingEntries(results);
+        return new PagedRankingResponse(rankings, page, totalPages, totalItems, size);
+    }
+
+    @Override
+    public PagedRankingResponse getYearlyRanking(int year, int page, int size, String search) {
+        log.info("Getting yearly ranking for {} with pagination (page={}, size={}, search={})", year, page, size, search);
+        
+        LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59, 59);
+        
+        String searchTerm = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        
+        List<Object[]> results = completedAlbumRepository.findTopCollectorsByPeriodWithSearch(
+            startDate, endDate, searchTerm, PageRequest.of(page, size));
+        
+        long totalItems = completedAlbumRepository.countCollectorsByPeriodWithSearch(startDate, endDate, searchTerm);
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+        
+        List<RankingEntry> rankings = mapToRankingEntries(results);
+        return new PagedRankingResponse(rankings, page, totalPages, totalItems, size);
+    }
+
+    @Override
+    public PagedRankingResponse getAllTimeRanking(int page, int size, String search) {
+        log.info("Getting all-time ranking with pagination (page={}, size={}, search={})", page, size, search);
+        
+        String searchTerm = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+        
+        List<Object[]> results = completedAlbumRepository.findTopCollectorsAllTimeWithSearch(
+            searchTerm, PageRequest.of(page, size));
+        
+        long totalItems = completedAlbumRepository.countCollectorsAllTimeWithSearch(searchTerm);
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+        
+        List<RankingEntry> rankings = mapToAllTimeRankingEntries(results);
+        return new PagedRankingResponse(rankings, page, totalPages, totalItems, size);
+    }
+
+    // Legacy methods for backwards compatibility
+    @Override
+    @Deprecated
     public List<RankingEntry> getMonthlyRanking(int year, int month) {
         log.info("Getting monthly ranking for {}-{}", year, month);
         
@@ -37,6 +95,7 @@ public class RankingServiceImpl implements RankingService {
     }
 
     @Override
+    @Deprecated
     public List<RankingEntry> getYearlyRanking(int year) {
         log.info("Getting yearly ranking for {}", year);
         
@@ -50,13 +109,14 @@ public class RankingServiceImpl implements RankingService {
     }
 
     @Override
+    @Deprecated
     public List<RankingEntry> getAllTimeRanking() {
         log.info("Getting all-time ranking");
         
         List<Object[]> results = completedAlbumRepository.findTopCollectorsAllTime(
             PageRequest.of(0, 10));
         
-        return mapToRankingEntries(results);
+        return mapToAllTimeRankingEntries(results);
     }
 
     private List<RankingEntry> mapToRankingEntries(List<Object[]> results) {
@@ -64,8 +124,21 @@ public class RankingServiceImpl implements RankingService {
         for (Object[] result : results) {
             Long collectorId = ((Number) result[0]).longValue();
             String username = (String) result[1];
-            Long count = ((Number) result[2]).longValue();
-            rankings.add(new RankingEntry(collectorId, username, count));
+            Long completions = ((Number) result[2]).longValue();
+            rankings.add(new RankingEntry(collectorId, username, completions, 0L, completions));
+        }
+        return rankings;
+    }
+
+    private List<RankingEntry> mapToAllTimeRankingEntries(List<Object[]> results) {
+        List<RankingEntry> rankings = new ArrayList<>();
+        for (Object[] result : results) {
+            Long collectorId = ((Number) result[0]).longValue();
+            String username = (String) result[1];
+            Long stars = result[2] != null ? ((Number) result[2]).longValue() : 0L;
+            Long completions = ((Number) result[3]).longValue();
+            Long score = ((Number) result[4]).longValue();
+            rankings.add(new RankingEntry(collectorId, username, completions, stars, score));
         }
         return rankings;
     }

@@ -53,6 +53,8 @@ public class Collector {
             Integer newValue = this.ownedStickers.get(stickerId) - 1;
             if(newValue > 0) {
                 this.ownedStickers.put(stickerId, newValue);
+            } else {
+                this.ownedStickers.remove(stickerId);
             }
         } else {
             throw new Exception("Can't remove sticker " + stickerId + " because " + this.getUsername() + " does not have it");
