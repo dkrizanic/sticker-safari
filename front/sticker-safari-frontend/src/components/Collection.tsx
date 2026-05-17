@@ -17,12 +17,10 @@ const Collection = (): JSX.Element => {
     useEffect(() => {
         const fetchAlbums = async () => {
             try {
-                // Fetch both albums (IDs 1 and 2 as per database)
-                const [album1, album2] = await Promise.all([
-                    apiService.getAlbum(1),
-                    apiService.getAlbum(2)
-                ]);
-                setAlbums([album1, album2]);
+                // Fetch all albums and filter only PUBLISHED ones
+                const allAlbums = await apiService.getAllAlbums();
+                const publishedAlbums = allAlbums.filter(album => album.status === 'PUBLISHED');
+                setAlbums(publishedAlbums);
             } catch (error) {
                 console.error('Failed to fetch albums:', error);
             }

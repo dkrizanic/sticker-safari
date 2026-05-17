@@ -108,6 +108,19 @@ const AlbumManagement: React.FC = () => {
     { key: 'id', header: 'ID' },
     { key: 'name', header: 'Album Name' },
     {
+      key: 'status',
+      header: 'Status',
+      render: (status: string) => (
+        <span className={`px-2 py-1 rounded-full text-sm font-semibold ${
+          status === 'PUBLISHED' 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-yellow-100 text-yellow-800'
+        }`}>
+          {status}
+        </span>
+      )
+    },
+    {
       key: 'stickers',
       header: 'Stickers Count',
       render: (stickers: any[]) => stickers?.length || 0

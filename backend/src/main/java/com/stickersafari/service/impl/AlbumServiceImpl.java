@@ -3,6 +3,7 @@ package com.stickersafari.service.impl;
 import com.stickersafari.dto.AlbumCompletionResponse;
 import com.stickersafari.dto.AlbumRequest;
 import com.stickersafari.entity.Album;
+import com.stickersafari.entity.AlbumStatus;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.CompletedAlbum;
 import com.stickersafari.entity.Notification;
@@ -96,27 +97,25 @@ public class AlbumServiceImpl implements AlbumService {
     public Album createAlbum(AlbumRequest request) {
         log.info("Creating new album: {}", request.getName());
         
-        // Validate: album must have at least one sticker
-        if (request.getStickerIds() == null || request.getStickerIds().isEmpty()) {
-            throw new IllegalArgumentException("Album must have at least one sticker");
-        }
-        
         Album album = new Album();
         album.setName(request.getName());
         album.setStickers(new ArrayList<>());
+        album.setStatus(AlbumStatus.PENDING); // Default status
         
         // Add existing stickers without album if provided
-        List<Sticker> stickers = stickerRepository.findAllById(request.getStickerIds());
-        for (Sticker sticker : stickers) {
-            if (sticker.getAlbum() == null) {
-                sticker.setAlbum(album);
-                album.getStickers().add(sticker);
+        if (request.getStickerIds() != null && !request.getStickerIds().isEmpty()) {
+            List<Sticker> stickers = stickerRepository.findAllById(request.getStickerIds());
+            for (Sticker sticker : stickers) {
+                if (sticker.getAlbum() == null) {
+                    sticker.setAlbum(album);
+                    album.getStickers().add(sticker);
+                }
             }
-        }
-        
-        // Validate: ensure at least one sticker was actually added
-        if (album.getStickers().isEmpty()) {
-            throw new IllegalArgumentException("Album must have at least one sticker. Provided stickers are already assigned to other albums.");
+            
+            // If album has at least one sticker, set status to PUBLISHED
+            if (!album.getStickers().isEmpty()) {
+                album.setStatus(AlbumStatus.PUBLISHED);
+            }
         }
         
         return albumRepository.save(album);
@@ -131,11 +130,6 @@ public class AlbumServiceImpl implements AlbumService {
         
         // Update stickers: remove stickers not in the new list (but don't delete them)
         if (request.getStickerIds() != null) {
-            // Validate: album must have at least one sticker
-            if (request.getStickerIds().isEmpty()) {
-                throw new IllegalArgumentException("Album must have at least one sticker");
-            }
-            
             // Remove album reference from stickers not in the new list
             List<Sticker> currentStickers = new ArrayList<>(album.getStickers());
             for (Sticker sticker : currentStickers) {
@@ -157,9 +151,11 @@ public class AlbumServiceImpl implements AlbumService {
                 }
             }
             
-            // Validate: ensure at least one sticker remains in the album
+            // Update status based on sticker count
             if (album.getStickers().isEmpty()) {
-                throw new IllegalArgumentException("Album must have at least one sticker after update");
+                album.setStatus(AlbumStatus.PENDING);
+            } else {
+                album.setStatus(AlbumStatus.PUBLISHED);
             }
         }
         

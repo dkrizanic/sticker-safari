@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Album, Sticker } from '../types';
+import { Album, AlbumStatus, Sticker } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 
@@ -40,6 +40,7 @@ export interface StickerResponse {
 export interface AlbumResponse {
     id: number;
     name: string;
+    status: AlbumStatus;
     stickers: StickerResponse[];
 }
 

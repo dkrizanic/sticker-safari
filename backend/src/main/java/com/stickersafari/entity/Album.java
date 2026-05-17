@@ -24,6 +24,10 @@ public class Album {
     @Column(nullable = false)
     private String name;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AlbumStatus status = AlbumStatus.PENDING;
+
     @OneToMany(mappedBy = "album", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Sticker> stickers = new ArrayList<>();
     

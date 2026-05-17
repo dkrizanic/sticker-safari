@@ -28,9 +28,11 @@ const PackOpening = (): JSX.Element => {
         const fetchAlbums = async () => {
             try {
                 const data = await apiService.getAllAlbums();
-                setAlbums(data);
-                if (data.length > 0) {
-                    setSelectedAlbum(data[0].id.toString());
+                // Only show published albums to collectors
+                const publishedAlbums = data.filter(album => album.status === 'PUBLISHED');
+                setAlbums(publishedAlbums);
+                if (publishedAlbums.length > 0) {
+                    setSelectedAlbum(publishedAlbums[0].id.toString());
                 }
             } catch (error) {
                 console.error('Failed to fetch albums:', error);

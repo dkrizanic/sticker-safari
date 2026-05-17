@@ -1,4 +1,4 @@
-import { Album, Sticker } from '../types';
+import { Album, AlbumStatus, Sticker } from '../types';
 
 export const ZCData: Sticker[] = [
     {
@@ -173,6 +173,7 @@ const generateAlbum = (id: number, name: string, dataSource: Sticker[]): Album =
     return {
         id,
         name,
+        status: AlbumStatus.PUBLISHED,
         stickers,
     };
 };

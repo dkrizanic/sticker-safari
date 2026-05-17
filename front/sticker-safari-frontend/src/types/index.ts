@@ -7,9 +7,15 @@ export interface Sticker {
   src: string;
 }
 
+export enum AlbumStatus {
+  PENDING = 'PENDING',
+  PUBLISHED = 'PUBLISHED'
+}
+
 export interface Album {
   id: number;
   name: string;
+  status: AlbumStatus;
   stickers: Sticker[];
 }
 
