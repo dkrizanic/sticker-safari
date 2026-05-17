@@ -10,6 +10,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface StickerMapper {
     
+    @Mapping(target = "albumId", source = "album.id")
     @Mapping(target = "album", ignore = true)
     StickerResponse toResponse(Sticker sticker);
     

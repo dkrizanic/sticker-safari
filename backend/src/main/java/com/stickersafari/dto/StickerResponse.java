@@ -10,6 +10,7 @@ public class StickerResponse {
     private String description;
     private String habitat;
     private String src;
+    private Long albumId; // ID of the album (if assigned)
 
     private AlbumResponse album;
 }

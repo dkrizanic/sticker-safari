@@ -35,6 +35,7 @@ export interface StickerResponse {
     description: string;
     habitat: string;
     src: string;
+    albumId?: number; // Optional: album the sticker belongs to
 }
 
 export interface AlbumResponse {

@@ -11,6 +11,7 @@ interface StickerFormData {
   description: string;
   habitat: string;
   src: string;
+  albumId?: number; // Optional: album to assign sticker to
 }
 
 const StickerManagement: React.FC = () => {
@@ -57,7 +58,8 @@ const StickerManagement: React.FC = () => {
       latinName: '',
       description: '',
       habitat: '',
-      src: ''
+      src: '',
+      albumId: undefined
     });
     setShowCreateModal(true);
   };
@@ -69,7 +71,8 @@ const StickerManagement: React.FC = () => {
       latinName: sticker.latinName,
       description: sticker.description,
       habitat: sticker.habitat,
-      src: sticker.src
+      src: sticker.src,
+      albumId: sticker.albumId // Album cannot be changed during edit
     });
     setShowEditModal(true);
   };
@@ -253,6 +256,24 @@ const StickerManagement: React.FC = () => {
               required
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Album (Optional)
+            </label>
+            <select
+              value={formData.albumId || ''}
+              onChange={(e) => setFormData({ ...formData, albumId: e.target.value ? Number(e.target.value) : undefined })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- No Album --</option>
+              {albums.map(album => (
+                <option key={album.id} value={album.id}>
+                  {album.name} (ID: {album.id})
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">You can assign the sticker to an album now, or leave it unassigned and add it to an album later.</p>
+          </div>
         </FormModal>
 
         {/* Edit Modal */}
@@ -328,6 +349,18 @@ const StickerManagement: React.FC = () => {
               placeholder="e.g., https://example.com/lion.jpg"
               required
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Album
+            </label>
+            <input
+              type="text"
+              value={formData.albumId ? albums.find(a => a.id === formData.albumId)?.name || 'Unknown Album' : 'No Album'}
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+            />
+            <p className="text-xs text-gray-500 mt-1">⚠️ Album assignment cannot be changed after creation (per requirements).</p>
           </div>
         </FormModal>
       </div>

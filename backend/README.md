@@ -18,15 +18,6 @@ Potrebno je i pratiti koje je notifikacije korisnik pročitao i omogućiti dohva
 - Ažuriranje: U slučaju da se prilikom ažuriranja albuma iz njega makne sličica, ta sličica se ne briše nego ostaje u sustavu da se može koristiti u nekom novom albumu.
 - Brisanje: Ako se obriše album, sličice se ne brišu nego ostaju u sustavu da se mogu koristiti u nekom novom albumu
 
-### Sticker
-- Dodavanje: Dodavanje nove sličice, prilikom dodavanja može se ali ne mora navesti album kojem pripada sličica.
-- Ažuriranje: Ažuriranjem sličice ne može se promijeniti album sličice.
-- Brisanje: Brisanje sličice ne treba napraviti.
-
-Naravno, želimo vidjeti i popis svih albuma i korisnika, te individualne prikaze za sva tri entiteta.  
-Potrebno je implementirati ove funkcionalnosti tamo gdje ne postoje.
-
-
 Želimo dodati funkcionalnost dovršavanja albuma i nagraditi korisnike za njihov trud. Nakon što korisnik sakupi jedan primjerak svih sličica u pojedinom albumu šalje mu se notifikacija da je moguće taj album dovršiti.  
 Dovršavanjem albuma korisnik gubi kopiju svake sličice iz tog albuma ali dobiva jednu "zvjezdicu".  
 Jedan album može se dovršiti više puta.  
