@@ -246,4 +246,18 @@ public class StickerServiceImpl implements StickerService {
                   pageable.getPageNumber(), pageable.getPageSize());
         return stickerRepository.findByAlbumIsNullWithPagination(pageable);
     }
+
+    @Override
+    @Transactional
+    public Sticker removeStickerFromAlbum(Long stickerId) {
+        log.info("Removing sticker {} from its album", stickerId);
+        Sticker sticker = findOne(stickerId);
+        if (sticker.getAlbum() != null) {
+            Album album = sticker.getAlbum();
+            album.getStickers().remove(sticker);
+            sticker.setAlbum(null);
+            log.info("Sticker {} removed from album {}", stickerId, album.getId());
+        }
+        return stickerRepository.save(sticker);
+    }
 }

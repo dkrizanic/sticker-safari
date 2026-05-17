@@ -106,4 +106,11 @@ public class StickerController {
         Sticker sticker = stickerService.updateSticker(id, request);
         return ResponseEntity.ok(stickerMapper.toResponse(sticker));
     }
+
+    @PatchMapping("/{id}/remove-from-album")
+    public ResponseEntity<StickerResponse> removeStickerFromAlbum(@PathVariable("id") Long id) {
+        log.info("Removing sticker {} from album", id);
+        Sticker sticker = stickerService.removeStickerFromAlbum(id);
+        return ResponseEntity.ok(stickerMapper.toResponse(sticker));
+    }
 }

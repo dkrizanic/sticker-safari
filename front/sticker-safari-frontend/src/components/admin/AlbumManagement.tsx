@@ -128,6 +128,23 @@ const AlbumManagement: React.FC = () => {
     }
   };
 
+  const handleRemoveSticker = async (stickerId: number) => {
+    try {
+      await apiService.removeStickerFromAlbum(stickerId);
+      
+      // Remove from selected IDs
+      setSelectedStickerIds(prev => prev.filter(id => id !== stickerId));
+      
+      // Refresh available stickers list
+      const response = await apiService.getStickersPaginated(0, 1000, 'id', 'asc', '', -1);
+      setAvailableStickers(response.stickers);
+      
+      addToast('Sticker removed from album', 'success');
+    } catch (error) {
+      addToast('Failed to remove sticker', 'error');
+    }
+  };
+
   const columns = [
     { key: 'id', header: 'ID' },
     { key: 'name', header: 'Album Name' },
@@ -268,7 +285,7 @@ const AlbumManagement: React.FC = () => {
                             <span className="font-semibold">#{sticker.id}</span> - {sticker.name}
                           </span>
                           <button
-                            onClick={() => setSelectedStickerIds(prev => prev.filter(id => id !== sticker.id))}
+                            onClick={() => handleRemoveSticker(sticker.id)}
                             className="text-red-600 hover:text-red-800 text-sm font-medium"
                             type="button"
                           >

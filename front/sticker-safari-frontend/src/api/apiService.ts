@@ -251,6 +251,11 @@ const apiService = {
         return response.data;
     },
 
+    removeStickerFromAlbum: async (id: number): Promise<StickerResponse> => {
+        const response = await api.patch(`/stickers/${id}/remove-from-album`);
+        return response.data;
+    },
+
     // Admin - Collector Management
     getAllCollectors: async (): Promise<CollectorResponse[]> => {
         const response = await api.get('/collectors');

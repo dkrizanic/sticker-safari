@@ -28,4 +28,5 @@ public interface StickerService {
     Page<Sticker> getStickersWithoutAlbumWithPagination(Pageable pageable);
     Sticker createSticker(StickerRequest request);
     Sticker updateSticker(Long stickerId, StickerRequest request);
+    Sticker removeStickerFromAlbum(Long stickerId);
 }
