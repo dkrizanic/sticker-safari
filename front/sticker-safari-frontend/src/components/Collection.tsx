@@ -9,6 +9,7 @@ import { Album } from '../types';
 const Collection = (): JSX.Element => {
 
     const [albums, setAlbums] = useState<Album[]>([]);
+    const [ownedStickers, setOwnedStickers] = useState<number[]>([]);
     const {currentUser} = useUser();
     const navigate = useNavigate();
 
@@ -30,6 +31,21 @@ const Collection = (): JSX.Element => {
         fetchAlbums();
     }, []);
 
+    useEffect(() => {
+        const fetchOwnedStickers = async () => {
+            if (currentUser?.id) {
+                try {
+                    const stickers = await apiService.getCollectorStickers(currentUser.id);
+                    setOwnedStickers(stickers);
+                } catch (error) {
+                    console.error('Failed to fetch owned stickers:', error);
+                }
+            }
+        };
+        
+        fetchOwnedStickers();
+    }, [currentUser]);
+
     // Redirect if admin tries to access
     useEffect(() => {
         if (currentUser?.role === 'ADMIN') {
@@ -42,30 +58,13 @@ const Collection = (): JSX.Element => {
         return <></>;
     }
 
-    //mock
-    const generateRandomOwnedStickers = (): number[] => { 
-        const ownedStickers: number[] = [];
-
-        albums.forEach((album) => {
-            album.stickers.forEach((sticker) => {
-                const shouldAddSticker = Math.random() < 0.5;
-
-                if (shouldAddSticker) {
-                    ownedStickers.push(sticker.id);
-                }
-            });
-        });
-
-        return ownedStickers;
-    }
-
     return (
         <div className="py-4 ml-2">
             {albums.map((album) => (
                 <AlbumCard 
                     key={album.id}
                     album={album}
-                    ownedStickers={currentUser ? generateRandomOwnedStickers() : []}/>
+                    ownedStickers={ownedStickers}/>
             ))}
         </div>
     );

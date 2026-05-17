@@ -3,6 +3,7 @@ package com.stickersafari.controller;
 import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.dto.CollectorResponse;
 import com.stickersafari.entity.Collector;
+import com.stickersafari.entity.Sticker;
 import com.stickersafari.mapper.CollectorMapper;
 import com.stickersafari.service.CollectorService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/collectors")
@@ -34,6 +36,16 @@ public class CollectorController {
         log.debug("Getting collector with ID: {}", id);
         Collector collector = collectorService.findById(id);
         return collectorMapper.toResponse(collector);
+    }
+
+    @GetMapping("/{id}/stickers")
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public ResponseEntity<List<Long>> getCollectorOwnedStickers(@PathVariable("id") Long id) {
+        log.debug("Getting owned stickers for collector with ID: {}", id);
+        Collector collector = collectorService.findById(id);
+        List<Long> ownedStickerIds = collector.getOwnedStickers().keySet().stream()
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ownedStickerIds);
     }
 
     @GetMapping("/username/{username}")

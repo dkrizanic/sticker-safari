@@ -27,7 +27,8 @@ const Login = (): JSX.Element => {
         setLoading(true);
         setError('');
 
-        // Store password temporarily for authentication
+        // Store credentials temporarily for authentication
+        localStorage.setItem('username', username);
         sessionStorage.setItem('password', password);
 
         try {
@@ -40,6 +41,7 @@ const Login = (): JSX.Element => {
             } catch (authError: any) {
                 // If we get 401, credentials are wrong
                 if (authError.response?.status === 401) {
+                    localStorage.removeItem('username');
                     sessionStorage.removeItem('password');
                     setError('Invalid username or password.');
                     setLoading(false);
@@ -55,9 +57,6 @@ const Login = (): JSX.Element => {
         } catch (collectorError: any) {
             // If collector not found (any error), try admin login
             try {
-                // Store username temporarily for auth test
-                localStorage.setItem('username', username);
-                
                 // Test admin authentication by calling an admin endpoint
                 await apiService.getAllAlbums();
                 
@@ -136,11 +135,34 @@ const Login = (): JSX.Element => {
     };
 
     return (
-        <div className="flex items-center justify-center h-screen bg-gray-100">
-            <div className="bg-white p-8 rounded shadow-md w-96">
-                <h2 className="text-2xl font-bold mb-4">
-                    {isRegistering ? 'Create Account' : 'Login'}
-                </h2>
+        <div className="min-h-screen bg-gray-100">
+            {/* Navigation Header */}
+            <nav className="bg-gray-800 text-white py-4 px-6 shadow-lg">
+                <div className="max-w-7xl mx-auto flex items-center">
+                    <button
+                        onClick={() => navigate('/')}
+                        className="flex items-center space-x-2 hover:text-gray-300 transition-colors"
+                    >
+                        <span className="text-2xl">🦁</span>
+                        <span className="text-xl font-bold">Sticker Safari</span>
+                    </button>
+                    <div className="ml-auto">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 rounded transition-colors"
+                        >
+                            ← Back to Home
+                        </button>
+                    </div>
+                </div>
+            </nav>
+            
+            {/* Login Form */}
+            <div className="flex items-center justify-center pt-20">
+                <div className="bg-white p-8 rounded shadow-md w-96">
+                    <h2 className="text-2xl font-bold mb-4">
+                        {isRegistering ? 'Create Account' : 'Login'}
+                    </h2>
                 {error && (
                     <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                         {error}
@@ -197,6 +219,7 @@ const Login = (): JSX.Element => {
                     </button>
                 </div>
             </div>
+        </div>
         </div>
     );
 };

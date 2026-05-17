@@ -118,6 +118,11 @@ const apiService = {
         return response.data;
     },
 
+    getCollectorStickers: async (collectorId: number): Promise<number[]> => {
+        const response = await api.get(`/collectors/${collectorId}/stickers`);
+        return response.data;
+    },
+
     createCollector: async (username: string): Promise<CollectorResponse> => {
         const response = await api.post('/collectors', { username });
         return response.data;
