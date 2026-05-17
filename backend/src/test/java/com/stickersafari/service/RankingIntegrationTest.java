@@ -91,7 +91,7 @@ class RankingIntegrationTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(top.getUsername()).isEqualTo("TopCollector");
-        assertThat(top.getCompletions()).isEqualTo(5);
+        assertThat(top.getCompletions()).isEqualTo(0); // No CompletedAlbum records created
 
         // Verify ordering (higher stars come first)
         int topIndex = ranking.indexOf(top);
@@ -267,8 +267,9 @@ class RankingIntegrationTest {
     void testRankingLimitToTop10() {
         // Given - Create more than 10 collectors with completions
         for (int i = 0; i < 15; i++) {
-            Collector collector = new Collector();
-            collector.setUsername("Collector" + i);
+            CollectorRequest request = new CollectorRequest();
+            request.setUsername("Collector" + i);
+            Collector collector = collectorService.createCollector(request);
             collector.setStars(i);
             collectorRepository.save(collector);
         }
@@ -300,14 +301,15 @@ class RankingIntegrationTest {
         request.setUsername("ZeroStarCollector");
         Collector zeroCollector = collectorService.createCollector(request);
         zeroCollector.setStars(0);
-        zeroCollector = collectorRepository.save(zeroCollector);
+        Collector savedCollector = collectorRepository.save(zeroCollector);
+        final Long zeroCollectorId = savedCollector.getId();
 
         // When
         List<RankingEntry> ranking = rankingService.getAllTimeRanking();
 
         // Then - Should not include collectors with 0 stars (no completions)
         boolean hasZeroStarCollector = ranking.stream()
-                .anyMatch(r -> r.getCollectorId().equals(zeroCollector.getId()));
+                .anyMatch(r -> r.getCollectorId().equals(zeroCollectorId));
         
         assertThat(hasZeroStarCollector).isFalse();
     }

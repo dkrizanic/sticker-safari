@@ -103,9 +103,9 @@ class AlbumServiceImplTest {
         // When
         List<Sticker> result = albumService.getMissingStickers(testAlbum, 1L);
 
-        // Then - Collector owns stickers 3, 4, 5, so missing 1, 2
-        assertThat(result).hasSize(3); // Actually returns missing stickers (1, 2) plus those not owned
-        assertThat(result).extracting(Sticker::getId).contains(1L, 2L);
+        // Then - Collector owns stickers 1, 2, so missing are 3, 4, 5
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(Sticker::getId).containsExactlyInAnyOrder(3L, 4L, 5L);
         verify(collectorService).findById(1L);
     }
 
@@ -123,7 +123,7 @@ class AlbumServiceImplTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getCompletion()).isEqualTo(40.0f); // 2 owned out of 5 = 40% complete
+        assertThat(result.getCompletion()).isCloseTo(40.0f, offset(0.01f)); // 2 owned out of 5 = 40% complete
         verify(albumRepository).findById(1L);
         verify(collectorService).findById(1L);
         verify(stickerMapper).toResponseList(any());
