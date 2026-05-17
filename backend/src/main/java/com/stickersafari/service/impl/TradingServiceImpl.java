@@ -61,7 +61,7 @@ public class TradingServiceImpl implements TradingService {
             throw new TradeOfferException("Sender does not own the offered sticker");
         }
         
-        List<Collector> collectors = collectorService.findPotentialTradingPartners(request.getOfferedStickerId(), request.getReceivedStickerId());
+        List<Collector> collectors = collectorService.findPotentialTradingPartners(request.getSenderId(), request.getOfferedStickerId(), request.getReceivedStickerId());
         log.debug("Found {} potential trading partners", collectors.size());
 
             for (Collector collector : collectors) {

@@ -57,14 +57,14 @@ public class CollectorServiceImpl implements CollectorService {
     }
 
     @Override
-    public List<Collector> findPotentialTradingPartners(Long offeredStickerId, Long receivedStickerId) {
-        log.debug("Finding potential trading partners for offer: {} and request: {}", offeredStickerId, receivedStickerId);
+    public List<Collector> findPotentialTradingPartners(Long senderId, Long offeredStickerId, Long receivedStickerId) {
+        log.debug("Finding potential trading partners for sender: {}, offer: {} and request: {}", senderId, offeredStickerId, receivedStickerId);
         
         Sticker offeredSticker = stickerService.findOne(offeredStickerId);
         List<Collector> allCollectors = collectorRepository.findAll();
 
         return allCollectors.stream()
-                .skip(1) // Skip first collector (original implementation started at index 1)
+                .filter(collector -> !collector.getId().equals(senderId)) // Exclude the sender
                 .filter(collector -> {
                     List<Sticker> receiverMissingStickers = albumService.getMissingStickers(
                             offeredSticker.getAlbum(), collector.getId());

@@ -12,7 +12,7 @@ public interface CollectorService {
 
     Collector save(Collector collector);
 
-    List<Collector> findPotentialTradingPartners(Long offeredStickerId, Long receivedStickerId);
+    List<Collector> findPotentialTradingPartners(Long senderId, Long offeredStickerId, Long receivedStickerId);
     
     void addStickersToCollector(Long collectorId, List<Long> stickerIds);
     
