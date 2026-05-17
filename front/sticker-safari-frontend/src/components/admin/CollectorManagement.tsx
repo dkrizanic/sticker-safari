@@ -150,9 +150,6 @@ const CollectorManagement: React.FC = () => {
               ← Back to Dashboard
             </button>
             <h1 className="text-4xl font-bold text-gray-900">Collector Management</h1>
-            <p className="text-gray-600 mt-2">
-              Note: New collectors are created through the registration process
-            </p>
           </div>
         </div>
 
