@@ -21,6 +21,12 @@ const Trading = (): JSX.Element => {
     const [selectedRequestedSticker, setSelectedRequestedSticker] = useState<number | null>(null);
     const [tradeMessage, setTradeMessage] = useState('');
 
+    // Global trade modal state
+    const [showGlobalModal, setShowGlobalModal] = useState(false);
+    const [allStickers, setAllStickers] = useState<any[]>([]);
+    const [globalOfferedSticker, setGlobalOfferedSticker] = useState<number | null>(null);
+    const [globalRequestedSticker, setGlobalRequestedSticker] = useState<number | null>(null);
+
     useEffect(() => {
         if (currentUser?.id) {
             fetchTradeOffers();
@@ -176,6 +182,58 @@ const Trading = (): JSX.Element => {
         setReceiverStickers([]);
     };
 
+    const handleOpenGlobalModal = async () => {
+        setShowGlobalModal(true);
+        setLoading(true);
+        try {
+            // Load current user's stickers
+            if (currentUser?.id) {
+                const userCollector = await apiService.getCollector(currentUser.id);
+                setMyStickers(userCollector.stickers || []);
+            }
+            
+            // Load all stickers in the system
+            const stickers = await apiService.getAllStickers();
+            setAllStickers(stickers);
+        } catch (error) {
+            console.error('Failed to load stickers:', error);
+            addToast('Failed to load stickers', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateGlobalTrade = async () => {
+        if (!currentUser?.id || !globalOfferedSticker || !globalRequestedSticker) {
+            addToast('Please select both stickers', 'error');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const result = await apiService.sendGlobalTradeOffer({
+                senderId: currentUser.id,
+                offeredStickerId: globalOfferedSticker,
+                receivedStickerId: globalRequestedSticker
+            });
+            addToast(result || 'Global trade offer sent successfully! 🌍', 'success');
+            setShowGlobalModal(false);
+            resetGlobalForm();
+            fetchTradeOffers();
+        } catch (error: any) {
+            console.error('Failed to create global trade offer:', error);
+            const errorMessage = error.response?.data?.message || error.response?.data || 'Failed to create global trade offer';
+            addToast(errorMessage, 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetGlobalForm = () => {
+        setGlobalOfferedSticker(null);
+        setGlobalRequestedSticker(null);
+    };
+
     if (!currentUser) {
         return (
             <div className="py-8 text-center">
@@ -188,12 +246,20 @@ const Trading = (): JSX.Element => {
         <div className="container mx-auto py-8 px-4">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold">Trading</h1>
-                <button
-                    onClick={handleOpenCreateModal}
-                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
-                >
-                    + Create New Trade
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleOpenGlobalModal}
+                        className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-semibold"
+                    >
+                        🌍 Global Trade
+                    </button>
+                    <button
+                        onClick={handleOpenCreateModal}
+                        className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
+                    >
+                        + Specific Trade
+                    </button>
+                </div>
             </div>
 
             {/* Tabs */}
@@ -485,6 +551,125 @@ const Trading = (): JSX.Element => {
                                         disabled={loading || !selectedReceiver || !selectedOfferedSticker || !selectedRequestedSticker}
                                     >
                                         {loading ? 'Sending...' : 'Send Trade Offer'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Global Trade Modal */}
+            {showGlobalModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold">🌍 Global Trade</h2>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Send offers to all collectors who have the sticker you want and need the one you offer
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setShowGlobalModal(false);
+                                        resetGlobalForm();
+                                    }}
+                                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Select Sticker to Offer */}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        You offer: <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={globalOfferedSticker || ''}
+                                        onChange={(e) => setGlobalOfferedSticker(Number(e.target.value))}
+                                        className="w-full border rounded-lg px-3 py-2"
+                                        disabled={loading}
+                                    >
+                                        <option value="">Select a sticker you own...</option>
+                                        {myStickers
+                                            .filter(sw => sw.quantity > 0)
+                                            .map((stickerWithQty) => (
+                                                <option key={stickerWithQty.sticker.id} value={stickerWithQty.sticker.id}>
+                                                    {stickerWithQty.sticker.name} ({stickerWithQty.sticker.latinName}) - Qty: {stickerWithQty.quantity}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        This sticker will be offered to collectors who need it
+                                    </p>
+                                </div>
+
+                                {/* Select Sticker to Request */}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        You want: <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={globalRequestedSticker || ''}
+                                        onChange={(e) => setGlobalRequestedSticker(Number(e.target.value))}
+                                        className="w-full border rounded-lg px-3 py-2"
+                                        disabled={loading || allStickers.length === 0}
+                                    >
+                                        <option value="">Select any sticker...</option>
+                                        {allStickers.map((sticker) => (
+                                            <option key={sticker.id} value={sticker.id}>
+                                                {sticker.name} ({sticker.latinName})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        Collectors who have duplicates of this sticker and need yours will receive an offer
+                                    </p>
+                                </div>
+
+                                {/* Info Box */}
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div className="flex">
+                                        <div className="flex-shrink-0">
+                                            <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <div className="ml-3">
+                                            <p className="text-sm text-blue-700">
+                                                <strong>How it works:</strong> Your trade offer will be automatically sent to all collectors who:
+                                            </p>
+                                            <ul className="list-disc list-inside text-sm text-blue-700 mt-1">
+                                                <li>Have extra copies of the sticker you want</li>
+                                                <li>Don't have the sticker you're offering</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-3 justify-end">
+                                    <button
+                                        onClick={() => {
+                                            setShowGlobalModal(false);
+                                            resetGlobalForm();
+                                        }}
+                                        className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                                        disabled={loading}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleCreateGlobalTrade}
+                                        className="px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={loading || !globalOfferedSticker || !globalRequestedSticker}
+                                    >
+                                        {loading ? 'Sending...' : 'Send Global Offer 🌍'}
                                     </button>
                                 </div>
                             </div>
