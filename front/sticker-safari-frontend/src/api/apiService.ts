@@ -252,7 +252,7 @@ const apiService = {
     },
 
     removeStickerFromAlbum: async (id: number): Promise<StickerResponse> => {
-        const response = await api.patch(`/stickers/${id}/remove-from-album`);
+        const response = await api.put(`/stickers/${id}/remove-from-album`);
         return response.data;
     },
 
