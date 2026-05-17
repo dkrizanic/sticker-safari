@@ -1,5 +1,6 @@
 package com.stickersafari.service;
 
+import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.dto.PagedRankingResponse;
 import com.stickersafari.dto.RankingEntry;
 import com.stickersafari.entity.Album;
@@ -31,6 +32,9 @@ class RankingPaginationIntegrationTest {
     private RankingService rankingService;
 
     @Autowired
+    private CollectorService collectorService;
+
+    @Autowired
     private CollectorRepository collectorRepository;
 
     @Autowired
@@ -60,8 +64,12 @@ class RankingPaginationIntegrationTest {
     }
 
     private void createCollectorWithCompletions(String username, int stars, int completions) {
-        Collector collector = new Collector();
-        collector.setUsername(username);
+        // Create collector using service (this handles User creation)
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername(username);
+        Collector collector = collectorService.createCollector(request);
+        
+        // Set stars manually
         collector.setStars(stars);
         collector = collectorRepository.save(collector);
 

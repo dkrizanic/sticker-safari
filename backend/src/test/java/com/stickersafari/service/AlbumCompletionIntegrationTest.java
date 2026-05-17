@@ -1,5 +1,6 @@
 package com.stickersafari.service;
 
+import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.CompletedAlbum;
@@ -16,9 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,6 +30,9 @@ class AlbumCompletionIntegrationTest {
 
     @Autowired
     private AlbumService albumService;
+
+    @Autowired
+    private CollectorService collectorService;
 
     @Autowired
     private CollectorRepository collectorRepository;
@@ -78,15 +80,19 @@ class AlbumCompletionIntegrationTest {
     }
 
     private Collector createCollectorWithAllStickers(String username) {
-        Collector collector = new Collector();
-        collector.setUsername(username);
-        collector.setStars(0);
+        // Create collector using service (this handles User creation)
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername(username);
+        Collector collector = collectorService.createCollector(request);
         
-        Map<Long, Integer> ownedStickers = new HashMap<>();
+        // Add all stickers from the album to this collector
         for (Sticker sticker : testAlbum.getStickers()) {
-            ownedStickers.put(sticker.getId(), 1);
+            try {
+                collector.addSticker(sticker.getId());
+            } catch (Exception e) {
+                // Sticker already added
+            }
         }
-        collector.setOwnedStickers(ownedStickers);
         
         return collectorRepository.save(collector);
     }
