@@ -30,7 +30,7 @@ public abstract class CollectorMapper {
     protected Set<StickerWithQuantityResponse> mapStickersWithQuantity(Collector collector) {
         Set<StickerWithQuantityResponse> result = new HashSet<>();
         if (collector.getOwnedStickers() != null) {
-            collector.getOwnedStickers().forEach((stickerId, quantity) => {
+            collector.getOwnedStickers().forEach((stickerId, quantity) -> {
                 try {
                     Sticker sticker = stickerService.findOne(stickerId);
                     StickerWithQuantityResponse stickerWithQty = new StickerWithQuantityResponse();

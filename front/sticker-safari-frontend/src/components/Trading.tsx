@@ -227,12 +227,22 @@ const Trading = (): JSX.Element => {
                                                             <p className="text-sm text-gray-600">They offer:</p>
                                                             <p className="font-medium">{offer.offeredSticker.name}</p>
                                                             <p className="text-sm italic">{offer.offeredSticker.latinName}</p>
+                                                            {offer.sender.stickers && (
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    (they have: {offer.sender.stickers.find(s => s.sticker.id === offer.offeredSticker.id)?.quantity || 0})
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         <span className="text-2xl">⇄</span>
                                                         <div>
                                                             <p className="text-sm text-gray-600">For your:</p>
                                                             <p className="font-medium">{offer.receivedSticker.name}</p>
                                                             <p className="text-sm italic">{offer.receivedSticker.latinName}</p>
+                                                            {offer.receiver.stickers && (
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    (you have: {offer.receiver.stickers.find(s => s.sticker.id === offer.receivedSticker.id)?.quantity || 0})
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     {offer.message && (
@@ -290,12 +300,22 @@ const Trading = (): JSX.Element => {
                                                             <p className="text-sm text-gray-600">You offered:</p>
                                                             <p className="font-medium">{offer.offeredSticker.name}</p>
                                                             <p className="text-sm italic">{offer.offeredSticker.latinName}</p>
+                                                            {offer.sender.stickers && (
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    (you have: {offer.sender.stickers.find(s => s.sticker.id === offer.offeredSticker.id)?.quantity || 0})
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         <span className="text-2xl">⇄</span>
                                                         <div>
                                                             <p className="text-sm text-gray-600">For their:</p>
                                                             <p className="font-medium">{offer.receivedSticker.name}</p>
                                                             <p className="text-sm italic">{offer.receivedSticker.latinName}</p>
+                                                            {offer.receiver.stickers && (
+                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                    (they have: {offer.receiver.stickers.find(s => s.sticker.id === offer.receivedSticker.id)?.quantity || 0})
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                     {offer.message && (
