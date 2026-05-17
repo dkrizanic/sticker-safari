@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,16 +70,41 @@ public class CollectorController {
 
     @PutMapping("/{id}")
     public ResponseEntity<CollectorResponse> updateCollector(@PathVariable("id") Long id,
-                                                              @RequestBody CollectorRequest request) {
+                                                              @RequestBody CollectorRequest request,
+                                                              Authentication authentication) {
         log.info("Updating collector with ID: {}", id);
+        
+        // Check authorization: user can only update their own profile unless they are admin
+        if (!isAuthorizedToModify(id, authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own profile");
+        }
+        
         Collector collector = collectorService.updateCollector(id, request);
         return ResponseEntity.ok(collectorMapper.toResponse(collector));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCollector(@PathVariable("id") Long id) {
+    public ResponseEntity<Void> deleteCollector(@PathVariable("id") Long id, Authentication authentication) {
         log.info("Deleting collector with ID: {}", id);
+        
+        // Check authorization: user can only delete their own profile unless they are admin
+        if (!isAuthorizedToModify(id, authentication)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own profile");
+        }
+        
         collectorService.deleteCollector(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    private boolean isAuthorizedToModify(Long collectorId, Authentication authentication) {
+        // Admins can modify any collector
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            return true;
+        }
+        
+        // Collectors can only modify their own profile
+        String username = authentication.getName();
+        Collector collector = collectorService.findById(collectorId);
+        return collector.getUsername().equals(username);
     }
 }

@@ -6,12 +6,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -43,42 +39,7 @@ public class SecurityConfig {
         return source;
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        // Create in-memory users for collectors (from seed data)
-        UserDetails bob = User.builder()
-                .username("Bob")
-                .password(passwordEncoder.encode("collector"))
-                .roles(Role.COLLECTOR.name())
-                .build();
-
-        UserDetails jack = User.builder()
-                .username("Jack")
-                .password(passwordEncoder.encode("collector"))
-                .roles(Role.COLLECTOR.name())
-                .build();
-
-        UserDetails anne = User.builder()
-                .username("Anne")
-                .password(passwordEncoder.encode("collector"))
-                .roles(Role.COLLECTOR.name())
-                .build();
-
-        UserDetails ema = User.builder()
-                .username("Ema")
-                .password(passwordEncoder.encode("collector"))
-                .roles(Role.COLLECTOR.name())
-                .build();
-
-        // Create admin users
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder.encode("admin"))
-                .roles(Role.ADMIN.name())
-                .build();
-
-        return new InMemoryUserDetailsManager(bob, jack, anne, ema, admin);
-    }
+    // Removed hardcoded UserDetailsService - now using CustomUserDetailsService from database
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -108,8 +69,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/stickers").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/stickers/**").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.DELETE, "/stickers/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.PUT, "/collectors/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE, "/collectors/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/collectors/**").hasAnyRole(Role.ADMIN.name(), Role.COLLECTOR.name())
+                        .requestMatchers(HttpMethod.DELETE, "/collectors/**").hasAnyRole(Role.ADMIN.name(), Role.COLLECTOR.name())
                         
                         // All other requests require authentication
                         .anyRequest().authenticated()
