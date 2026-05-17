@@ -1,7 +1,3 @@
-## 1.
-Svaki album ima barem jednu sličicu. Sličice sadrže edukativne informacije o životinji koju predstavljaju (ime, latinsko ime, stanište, opis, slika).  
-Različiti albumi ne mogu sadržavati istu sličicu.
-
 
 ### 3.
 Korisnici mogu međusobno razmjenjivati sličice. Postoje dva načina razmjene sličica: globalni i osobni.  

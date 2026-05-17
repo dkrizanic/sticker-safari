@@ -95,19 +95,28 @@ public class AlbumServiceImpl implements AlbumService {
     @Transactional
     public Album createAlbum(AlbumRequest request) {
         log.info("Creating new album: {}", request.getName());
+        
+        // Validate: album must have at least one sticker
+        if (request.getStickerIds() == null || request.getStickerIds().isEmpty()) {
+            throw new IllegalArgumentException("Album must have at least one sticker");
+        }
+        
         Album album = new Album();
         album.setName(request.getName());
         album.setStickers(new ArrayList<>());
         
         // Add existing stickers without album if provided
-        if (request.getStickerIds() != null && !request.getStickerIds().isEmpty()) {
-            List<Sticker> stickers = stickerRepository.findAllById(request.getStickerIds());
-            for (Sticker sticker : stickers) {
-                if (sticker.getAlbum() == null) {
-                    sticker.setAlbum(album);
-                    album.getStickers().add(sticker);
-                }
+        List<Sticker> stickers = stickerRepository.findAllById(request.getStickerIds());
+        for (Sticker sticker : stickers) {
+            if (sticker.getAlbum() == null) {
+                sticker.setAlbum(album);
+                album.getStickers().add(sticker);
             }
+        }
+        
+        // Validate: ensure at least one sticker was actually added
+        if (album.getStickers().isEmpty()) {
+            throw new IllegalArgumentException("Album must have at least one sticker. Provided stickers are already assigned to other albums.");
         }
         
         return albumRepository.save(album);
@@ -122,6 +131,11 @@ public class AlbumServiceImpl implements AlbumService {
         
         // Update stickers: remove stickers not in the new list (but don't delete them)
         if (request.getStickerIds() != null) {
+            // Validate: album must have at least one sticker
+            if (request.getStickerIds().isEmpty()) {
+                throw new IllegalArgumentException("Album must have at least one sticker");
+            }
+            
             // Remove album reference from stickers not in the new list
             List<Sticker> currentStickers = new ArrayList<>(album.getStickers());
             for (Sticker sticker : currentStickers) {
@@ -141,6 +155,11 @@ public class AlbumServiceImpl implements AlbumService {
                         album.getStickers().add(sticker);
                     }
                 }
+            }
+            
+            // Validate: ensure at least one sticker remains in the album
+            if (album.getStickers().isEmpty()) {
+                throw new IllegalArgumentException("Album must have at least one sticker after update");
             }
         }
         
