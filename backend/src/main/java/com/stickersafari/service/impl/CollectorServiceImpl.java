@@ -2,7 +2,9 @@ package com.stickersafari.service.impl;
 
 import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.entity.Collector;
+import com.stickersafari.entity.Role;
 import com.stickersafari.entity.Sticker;
+import com.stickersafari.entity.User;
 import com.stickersafari.exception.EntityNotFoundException;
 import com.stickersafari.repository.CollectorRepository;
 import com.stickersafari.service.AlbumService;
@@ -10,9 +12,11 @@ import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.StickerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +30,7 @@ public class CollectorServiceImpl implements CollectorService {
     private final CollectorRepository collectorRepository;
     private final AlbumService albumService;
     private final StickerService stickerService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Collector findById(Long id) {
@@ -99,9 +104,23 @@ public class CollectorServiceImpl implements CollectorService {
     @Transactional
     public Collector createCollector(CollectorRequest request) {
         log.info("Creating new collector: {}", request.getUsername());
+        
+        // Create User entity for authentication
+        User user = new User();
+        user.setUsername(request.getUsername());
+        // Hash the default password using BCrypt
+        user.setPassword(passwordEncoder.encode("collector"));
+        user.setRole(Role.COLLECTOR);
+        user.setCreatedAt(LocalDateTime.now());
+        
+        // Create Collector entity
         Collector collector = new Collector();
+        collector.setUser(user);
         collector.setUsername(request.getUsername());
         collector.setOwnedStickers(new HashMap<>());
+        collector.setDailyStickerCount(0);
+        collector.setStars(0);
+        
         return collectorRepository.save(collector);
     }
 

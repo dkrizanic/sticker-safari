@@ -1,14 +1,32 @@
 -- Seed initial test data for Sticker Safari
 -- This provides sample data for development and testing
 
--- Insert collectors with explicit IDs
-INSERT INTO collector (id, username, created_at) VALUES
-    (1, 'Bob', CURRENT_TIMESTAMP),
-    (2, 'Jack', CURRENT_TIMESTAMP),
-    (3, 'Anne', CURRENT_TIMESTAMP),
-    (4, 'Ema', CURRENT_TIMESTAMP);
+-- SECURITY NOTE: Passwords are BCrypt hashed (cost factor 10)
+-- Generated using Spring Security's BCryptPasswordEncoder
+-- To regenerate: Run com.stickersafari.util.PasswordHashGenerator
 
--- Update sequence to start after seed data (H2 compatible)
+-- Insert users first (passwords are BCrypt hashed)
+-- Password for collectors: "collector"
+-- Password for admin: "admin"
+INSERT INTO user_account (id, username, password, role, created_at) VALUES
+    (1, 'Bob', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'COLLECTOR', CURRENT_TIMESTAMP),
+    (2, 'Jack', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'COLLECTOR', CURRENT_TIMESTAMP),
+    (3, 'Anne', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'COLLECTOR', CURRENT_TIMESTAMP),
+    (4, 'Ema', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'COLLECTOR', CURRENT_TIMESTAMP),
+    (5, 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'ADMIN', CURRENT_TIMESTAMP);
+
+-- Update user sequence
+ALTER SEQUENCE user_id_seq RESTART WITH 6;
+
+-- Insert collectors with user references
+-- NOTE: Admin is NOT a collector - admin users don't collect stickers
+INSERT INTO collector (id, user_id, username) VALUES
+    (1, 1, 'Bob'),
+    (2, 2, 'Jack'),
+    (3, 3, 'Anne'),
+    (4, 4, 'Ema');
+
+-- Update sequence to start after seed data
 ALTER SEQUENCE collector_id_seq RESTART WITH 5;
 
 -- Insert albums with explicit IDs
@@ -37,12 +55,6 @@ INSERT INTO sticker (id, name, latin_name, description, habitat, src, album) VAL
 
 -- Update sequence to start after seed data (H2 compatible)
 ALTER SEQUENCE sticker_id_seq RESTART WITH 11;
-
--- Give Bob some initial stickers
-INSERT INTO collector_sticker (collector_id, sticker_id, quantity) VALUES
-    (1, 1, 2),  -- Bob has 2 Lions
-    (1, 2, 1),  -- Bob has 1 Elephant
-    (1, 6, 1);  -- Bob has 1 Dolphin
 
 -- Give Bob some initial stickers
 INSERT INTO collector_sticker (collector_id, sticker_id, quantity) VALUES

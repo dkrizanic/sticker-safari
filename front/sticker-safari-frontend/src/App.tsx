@@ -5,23 +5,47 @@ import Collection from "./components/Collection";
 import Login from "./components/Login";
 import Trading from "./components/Trading"
 import PackOpening from "./components/PackOpening"
-import { UserProvider } from './context/UserContext';
+import LandingPage from "./components/LandingPage"
+import AdminDashboard from "./components/AdminDashboard"
+import { UserProvider, useUser } from './context/UserContext';
+import { ToastProvider } from './context/ToastContext';
+import ToastContainer from './components/ToastContainer';
+import { useToast } from './context/ToastContext';
+
+function AppContent(): JSX.Element {
+  const { currentUser } = useUser();
+  const { toasts, removeToast } = useToast();
+  
+  const getDefaultRoute = () => {
+    if (!currentUser) return <LandingPage />;
+    if (currentUser.role === 'ADMIN') return <Navigate to="/admin" replace />;
+    return <Navigate to="/collection" replace />;
+  };
+
+  return (
+    <div>
+      {currentUser && <Header />}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      <Routes>
+        <Route path="/" element={getDefaultRoute()} />
+        <Route path="/collection" element={<Collection/>} />
+        <Route path="/login" element={<Login/>} />
+        <Route path="/trading" element={<Trading/>} />
+        <Route path="/pack-opening" element={<PackOpening/>}/>
+        <Route path="/admin" element={<AdminDashboard/>}/>
+      </Routes>
+    </div>
+  );
+}
 
 function App(): JSX.Element {
   return (
     <UserProvider>
-      <Router>
-        <div>
-          <Header />
-          <Routes>
-            <Route path="/" element={<Navigate to="/collection" replace />} />
-            <Route path="/collection" element={<Collection/>} />
-            <Route path="/login" element={<Login/>} />
-            <Route path="/trading" element={<Trading/>} />
-            <Route path="/pack-opening" element={<PackOpening/>}/>
-          </Routes>
-        </div>
-      </Router>
+      <ToastProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ToastProvider>
     </UserProvider>
   )
 }

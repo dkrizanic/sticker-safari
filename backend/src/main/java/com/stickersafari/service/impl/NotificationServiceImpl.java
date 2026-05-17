@@ -55,4 +55,14 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Saving notification for recipient ID: {}", notification.getRecipient().getId());
         return notificationRepository.save(notification);
     }
+    
+    @Override
+    @Transactional
+    public void markAsRead(Long notificationId) {
+        log.debug("Marking notification {} as read", notificationId);
+        notificationRepository.findById(notificationId).ifPresent(notification -> {
+            notification.setRead(true);
+            notificationRepository.save(notification);
+        });
+    }
 }

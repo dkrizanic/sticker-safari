@@ -10,6 +10,24 @@ const api = axios.create({
     },
 });
 
+// Add request interceptor for Basic Auth
+api.interceptors.request.use(config => {
+    // Skip auth for login and registration endpoints
+    const isPublicEndpoint = 
+        config.url?.includes('/collectors/username/') || 
+        (config.url?.includes('/collectors') && config.method === 'post');
+    
+    if (!isPublicEndpoint) {
+        const username = localStorage.getItem('username');
+        const password = sessionStorage.getItem('password') || 'collector';
+        if (username) {
+            const credentials = btoa(`${username}:${password}`);
+            config.headers.Authorization = `Basic ${credentials}`;
+        }
+    }
+    return config;
+});
+
 export interface StickerResponse {
     id: number;
     name: string;
@@ -68,6 +86,11 @@ export interface AnswerPendingTradeOfferRequest {
 
 const apiService = {
     // Album endpoints
+    getAllAlbums: async (): Promise<AlbumResponse[]> => {
+        const response = await api.get('/album');
+        return response.data;
+    },
+    
     getAlbum: async (albumId: number): Promise<AlbumResponse> => {
         const response = await api.get(`/album/${albumId}`);
         return response.data;
@@ -92,6 +115,11 @@ const apiService = {
 
     getCollectorByUsername: async (username: string): Promise<CollectorResponse> => {
         const response = await api.get(`/collectors/username/${username}`);
+        return response.data;
+    },
+
+    createCollector: async (username: string): Promise<CollectorResponse> => {
+        const response = await api.post('/collectors', { username });
         return response.data;
     },
 
@@ -128,8 +156,12 @@ const apiService = {
 
     // Notification endpoints
     getNotifications: async (collectorId: number): Promise<any[]> => {
-        const response = await api.get(`/notification/${collectorId}`);
+        const response = await api.get(`/notifications/${collectorId}?read=true`);
         return response.data;
+    },
+
+    markNotificationAsRead: async (notificationId: number): Promise<void> => {
+        await api.put(`/notifications/${notificationId}/read`);
     },
 };
 

@@ -18,10 +18,13 @@ export const UserProvider = ({ children }: UserProviderProps): JSX.Element => {
 
     const login = (user: User) => {
         setCurrentUser(user);
+        localStorage.setItem('username', user.username);
     };
 
     const logout = () => {
         setCurrentUser(null);
+        localStorage.removeItem('username');
+        sessionStorage.removeItem('password');
     };
 
     return (

@@ -16,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.stickersafari.entity.Role;
 
 import java.util.Arrays;
 
@@ -48,32 +49,32 @@ public class SecurityConfig {
         UserDetails bob = User.builder()
                 .username("Bob")
                 .password(passwordEncoder.encode("collector"))
-                .roles("COLLECTOR")
+                .roles(Role.COLLECTOR.name())
                 .build();
 
         UserDetails jack = User.builder()
                 .username("Jack")
                 .password(passwordEncoder.encode("collector"))
-                .roles("COLLECTOR")
+                .roles(Role.COLLECTOR.name())
                 .build();
 
         UserDetails anne = User.builder()
                 .username("Anne")
                 .password(passwordEncoder.encode("collector"))
-                .roles("COLLECTOR")
+                .roles(Role.COLLECTOR.name())
                 .build();
 
         UserDetails ema = User.builder()
                 .username("Ema")
                 .password(passwordEncoder.encode("collector"))
-                .roles("COLLECTOR")
+                .roles(Role.COLLECTOR.name())
                 .build();
 
         // Create admin users
         UserDetails admin = User.builder()
                 .username("admin")
                 .password(passwordEncoder.encode("admin"))
-                .roles("ADMIN")
+                .roles(Role.ADMIN.name())
                 .build();
 
         return new InMemoryUserDetailsManager(bob, jack, anne, ema, admin);
@@ -85,30 +86,30 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for development
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints - POST /collectors (user registration)
+                        // Public endpoints - Must be FIRST (more specific patterns)
                         .requestMatchers(HttpMethod.POST, "/collectors").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/collectors/username/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/collectors/username/**").permitAll()
                         
                         // COLLECTOR role - Read-only access and collection activities
-                        .requestMatchers(HttpMethod.GET, "/album/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.GET, "/stickers/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.GET, "/collectors/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.GET, "/rankings/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.GET, "/notifications/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.POST, "/stickers/open/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.POST, "/album/*/complete/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.POST, "/tradeoffer/**").hasRole("COLLECTOR")
-                        .requestMatchers(HttpMethod.GET, "/tradeoffer/**").hasRole("COLLECTOR")
+                        .requestMatchers(HttpMethod.GET, "/album/**").hasAnyRole(Role.COLLECTOR.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/stickers/**").hasAnyRole(Role.COLLECTOR.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/collectors/**").hasAnyRole(Role.COLLECTOR.name(), Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.GET, "/rankings/**").hasRole(Role.COLLECTOR.name())
+                        .requestMatchers(HttpMethod.GET, "/notifications/**").hasRole(Role.COLLECTOR.name())
+                        .requestMatchers(HttpMethod.POST, "/stickers/open/**").hasRole(Role.COLLECTOR.name())
+                        .requestMatchers(HttpMethod.POST, "/album/*/complete/**").hasRole(Role.COLLECTOR.name())
+                        .requestMatchers(HttpMethod.POST, "/tradeoffer/**").hasRole(Role.COLLECTOR.name())
+                        .requestMatchers(HttpMethod.GET, "/tradeoffer/**").hasRole(Role.COLLECTOR.name())
                         
                         // ADMIN role - CRUD access but no collection activities
-                        .requestMatchers(HttpMethod.POST, "/album").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/album/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/album/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/stickers").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/stickers/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/stickers/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/collectors/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/collectors/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/album").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/album/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/album/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, "/stickers").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/stickers/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/stickers/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, "/collectors/**").hasRole(Role.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, "/collectors/**").hasRole(Role.ADMIN.name())
                         
                         // All other requests require authentication
                         .anyRequest().authenticated()

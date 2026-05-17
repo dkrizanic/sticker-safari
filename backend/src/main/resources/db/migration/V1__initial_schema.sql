@@ -2,16 +2,30 @@
 -- Created with Flyway migration
 
 -- Create sequences
+CREATE SEQUENCE IF NOT EXISTS user_id_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS collector_id_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS album_id_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS sticker_id_seq START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE IF NOT EXISTS notification_id_seq START WITH 1 INCREMENT BY 1;
 
+-- User account table (for authentication)
+CREATE TABLE user_account (
+    id BIGINT PRIMARY KEY DEFAULT nextval('user_id_seq'),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Collector table
 CREATE TABLE collector (
     id BIGINT PRIMARY KEY DEFAULT nextval('collector_id_seq'),
-    username VARCHAR(255) NOT NULL UNIQUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    user_id BIGINT NOT NULL UNIQUE,
+    username VARCHAR(255),
+    last_pack_open_date DATE,
+    daily_sticker_count INTEGER,
+    stars INTEGER,
+    CONSTRAINT fk_collector_user FOREIGN KEY (user_id) REFERENCES user_account(id) ON DELETE CASCADE
 );
 
 -- Album table

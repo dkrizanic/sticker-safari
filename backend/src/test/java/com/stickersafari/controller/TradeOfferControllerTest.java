@@ -68,7 +68,7 @@ class TradeOfferControllerTest {
         testTradeOffer.setMessage("Trade request");
 
         testTradeOfferResponse = new TradeOfferResponse();
-        testTradeOfferResponse.setStatus("PENDING");
+        testTradeOfferResponse.setStatus(TradeOfferStatus.PENDING);
         testTradeOfferResponse.setMessage("Trade request");
 
         specificRequest = new SpecificTradeOfferRequest();
@@ -101,7 +101,7 @@ class TradeOfferControllerTest {
         // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getStatus()).isEqualTo("PENDING");
+        assertThat(result.getBody().getStatus()).isEqualTo(TradeOfferStatus.PENDING);
         verify(tradingService).sendSpecificTradeOffer(specificRequest);
         verify(tradeOfferMapper).toResponse(testTradeOffer);
     }
@@ -163,7 +163,7 @@ class TradeOfferControllerTest {
     void acceptPendingTradeOffer_ShouldReturnAcceptedOffer() throws Exception {
         // Given
         testTradeOffer.setStatus(TradeOfferStatus.ACCEPTED);
-        testTradeOfferResponse.setStatus("ACCEPTED");
+        testTradeOfferResponse.setStatus(TradeOfferStatus.ACCEPTED);
         
         when(tradingService.acceptTradeOffer(any(AnswerPendingTradeOfferRequest.class))).thenReturn(testTradeOffer);
         when(tradeOfferMapper.toResponse(testTradeOffer)).thenReturn(testTradeOfferResponse);
@@ -174,7 +174,7 @@ class TradeOfferControllerTest {
         // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getStatus()).isEqualTo("ACCEPTED");
+        assertThat(result.getBody().getStatus()).isEqualTo(TradeOfferStatus.ACCEPTED);
         verify(tradingService).acceptTradeOffer(answerRequest);
         verify(tradeOfferMapper).toResponse(testTradeOffer);
     }
@@ -183,7 +183,7 @@ class TradeOfferControllerTest {
     void refusePendingTradeOffer_ShouldReturnRefusedOffer() {
         // Given
         testTradeOffer.setStatus(TradeOfferStatus.REFUSED);
-        testTradeOfferResponse.setStatus("REFUSED");
+        testTradeOfferResponse.setStatus(TradeOfferStatus.REFUSED);
         
         when(tradingService.refusePendingTradeOffer(any(AnswerPendingTradeOfferRequest.class))).thenReturn(testTradeOffer);
         when(tradeOfferMapper.toResponse(testTradeOffer)).thenReturn(testTradeOfferResponse);
@@ -194,7 +194,7 @@ class TradeOfferControllerTest {
         // Then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
-        assertThat(result.getBody().getStatus()).isEqualTo("REFUSED");
+        assertThat(result.getBody().getStatus()).isEqualTo(TradeOfferStatus.REFUSED);
         verify(tradingService).refusePendingTradeOffer(answerRequest);
         verify(tradeOfferMapper).toResponse(testTradeOffer);
     }

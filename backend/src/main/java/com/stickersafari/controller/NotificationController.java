@@ -24,6 +24,12 @@ public class NotificationController {
         }
         return sortNotifications(notificationService.getUnreadNotifications(collectorId));
     }
+    
+    @PutMapping("/{notificationId}/read")
+    public void markNotificationAsRead(@PathVariable("notificationId") Long notificationId) {
+        log.debug("Marking notification {} as read", notificationId);
+        notificationService.markAsRead(notificationId);
+    }
 
     private List<Notification> sortNotifications(List<Notification> notifications) {
         for (int i = 0; i < notifications.size()-1; i++)

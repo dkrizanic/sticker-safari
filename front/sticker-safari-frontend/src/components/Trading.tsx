@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import apiService, { TradeOfferResponse } from '../api/apiService';
 import { useUser } from '../context/UserContext';
+import { useToast } from '../context/ToastContext';
 
 const Trading = (): JSX.Element => {
     const { currentUser } = useUser();
+    const { addToast } = useToast();
     const [receivedOffers, setReceivedOffers] = useState<TradeOfferResponse[]>([]);
     const [sentOffers, setSentOffers] = useState<TradeOfferResponse[]>([]);
     const [loading, setLoading] = useState(false);
@@ -28,6 +30,7 @@ const Trading = (): JSX.Element => {
             setSentOffers(sent);
         } catch (error) {
             console.error('Failed to fetch trade offers:', error);
+            addToast('Failed to load trade offers', 'error');
         } finally {
             setLoading(false);
         }
@@ -43,11 +46,11 @@ const Trading = (): JSX.Element => {
                 offeredStickerId: offer.offeredSticker.id,
                 receivedStickerId: offer.receivedSticker.id
             });
-            alert('Trade offer accepted successfully!');
+            addToast(`Trade accepted! You received ${offer.offeredSticker.name} 🎉`, 'success');
             fetchTradeOffers();
         } catch (error) {
             console.error('Failed to accept trade offer:', error);
-            alert('Failed to accept trade offer');
+            addToast('Failed to accept trade offer', 'error');
         }
     };
 
@@ -61,11 +64,11 @@ const Trading = (): JSX.Element => {
                 offeredStickerId: offer.offeredSticker.id,
                 receivedStickerId: offer.receivedSticker.id
             });
-            alert('Trade offer refused');
+            addToast('Trade offer refused', 'info');
             fetchTradeOffers();
         } catch (error) {
             console.error('Failed to refuse trade offer:', error);
-            alert('Failed to refuse trade offer');
+            addToast('Failed to refuse trade offer', 'error');
         }
     };
 

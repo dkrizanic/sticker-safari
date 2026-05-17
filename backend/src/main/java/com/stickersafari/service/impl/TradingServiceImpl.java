@@ -93,12 +93,12 @@ public class TradingServiceImpl implements TradingService {
 
     @Override
     public List<TradeOffer> getPendingReceivedTradeOffers(Long collectorId) {
-        return tradeOfferRepository.findByReceiverIdAndStatus(collectorId, "PENDING");
+        return tradeOfferRepository.findByReceiverIdAndStatus(collectorId, TradeOfferStatus.PENDING);
     }
 
     @Override
     public List<TradeOffer> getPendingSentTradeOffers(Long collectorId) {
-        return tradeOfferRepository.findBySenderIdAndStatus(collectorId, "PENDING");
+        return tradeOfferRepository.findBySenderIdAndStatus(collectorId, TradeOfferStatus.PENDING);
     }
 
     @Override
