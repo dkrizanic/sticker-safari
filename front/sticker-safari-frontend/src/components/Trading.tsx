@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import apiService, { TradeOfferResponse } from '../api/apiService';
+import apiService, { TradeOfferResponse, CollectorResponse, AlbumResponse } from '../api/apiService';
 import { useUser } from '../context/UserContext';
 import { useToast } from '../context/ToastContext';
+import { Sticker } from '../types';
 
 const Trading = (): JSX.Element => {
     const { currentUser } = useUser();
@@ -10,6 +11,16 @@ const Trading = (): JSX.Element => {
     const [sentOffers, setSentOffers] = useState<TradeOfferResponse[]>([]);
     const [loading, setLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
+    
+    // Create trade modal state
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [collectors, setCollectors] = useState<CollectorResponse[]>([]);
+    const [selectedReceiver, setSelectedReceiver] = useState<number | null>(null);
+    const [myAlbums, setMyAlbums] = useState<AlbumResponse[]>([]);
+    const [receiverAlbums, setReceiverAlbums] = useState<AlbumResponse[]>([]);
+    const [selectedOfferedSticker, setSelectedOfferedSticker] = useState<number | null>(null);
+    const [selectedRequestedSticker, setSelectedRequestedSticker] = useState<number | null>(null);
+    const [tradeMessage, setTradeMessage] = useState('');
 
     useEffect(() => {
         if (currentUser?.id) {
@@ -72,6 +83,91 @@ const Trading = (): JSX.Element => {
         }
     };
 
+    const handleOpenCreateModal = async () => {
+        setShowCreateModal(true);
+        setLoading(true);
+        try {
+            const [allCollectors, albums] = await Promise.all([
+                apiService.getAllCollectors(),
+                apiService.getAllAlbums()
+            ]);
+            // Filter out current user from collectors list
+            setCollectors(allCollectors.filter(c => c.id !== currentUser?.id));
+            
+            // Load current user's albums with their stickers
+            if (currentUser?.id) {
+                // Get full albums with sticker details
+                const fullAlbums = await Promise.all(
+                    albums.map(album => apiService.getAlbum(album.id))
+                );
+                setMyAlbums(fullAlbums);
+            }
+        } catch (error) {
+            console.error('Failed to load trading data:', error);
+            addToast('Failed to load trading data', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReceiverChange = async (receiverId: number) => {
+        setSelectedReceiver(receiverId);
+        setSelectedRequestedSticker(null);
+        setReceiverAlbums([]);
+        
+        if (!receiverId) return;
+        
+        setLoading(true);
+        try {
+            const albums = await apiService.getAllAlbums();
+            const receiverAlbums = await Promise.all(
+                albums.map(album => apiService.getAlbum(album.id))
+            );
+            setReceiverAlbums(receiverAlbums);
+        } catch (error) {
+            console.error('Failed to load receiver albums:', error);
+            addToast('Failed to load receiver collection', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateTrade = async () => {
+        if (!currentUser?.id || !selectedReceiver || !selectedOfferedSticker || !selectedRequestedSticker) {
+            addToast('Please fill all required fields', 'error');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await apiService.sendSpecificTradeOffer({
+                senderId: currentUser.id,
+                receiverId: selectedReceiver,
+                offeredStickerId: selectedOfferedSticker,
+                receivedStickerId: selectedRequestedSticker,
+                message: tradeMessage || undefined
+            });
+            addToast('Trade offer sent successfully! 🤝', 'success');
+            setShowCreateModal(false);
+            resetCreateForm();
+            fetchTradeOffers();
+        } catch (error: any) {
+            console.error('Failed to create trade offer:', error);
+            const errorMessage = error.response?.data?.message || 'Failed to create trade offer';
+            addToast(errorMessage, 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const resetCreateForm = () => {
+        setSelectedReceiver(null);
+        setSelectedOfferedSticker(null);
+        setSelectedRequestedSticker(null);
+        setTradeMessage('');
+        setReceiverAlbums([]);
+    };
+
     if (!currentUser) {
         return (
             <div className="py-8 text-center">
@@ -82,7 +178,15 @@ const Trading = (): JSX.Element => {
 
     return (
         <div className="container mx-auto py-8 px-4">
-            <h1 className="text-3xl font-bold mb-6">Trading</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Trading</h1>
+                <button
+                    onClick={handleOpenCreateModal}
+                    className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold"
+                >
+                    + Create New Trade
+                </button>
+            </div>
 
             {/* Tabs */}
             <div className="flex mb-6 border-b">
@@ -221,6 +325,134 @@ const Trading = (): JSX.Element => {
                         </div>
                     )}
                 </>
+            )}
+
+            {/* Create Trade Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold">Create New Trade</h2>
+                                <button
+                                    onClick={() => {
+                                        setShowCreateModal(false);
+                                        resetCreateForm();
+                                    }}
+                                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                                >
+                                    ×
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Select Receiver */}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        Trade with: <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={selectedReceiver || ''}
+                                        onChange={(e) => handleReceiverChange(Number(e.target.value))}
+                                        className="w-full border rounded-lg px-3 py-2"
+                                        disabled={loading}
+                                    >
+                                        <option value="">Select a collector...</option>
+                                        {collectors.map((collector) => (
+                                            <option key={collector.id} value={collector.id}>
+                                                {collector.username}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Select Sticker to Offer */}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        You offer: <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        value={selectedOfferedSticker || ''}
+                                        onChange={(e) => setSelectedOfferedSticker(Number(e.target.value))}
+                                        className="w-full border rounded-lg px-3 py-2"
+                                        disabled={loading}
+                                    >
+                                        <option value="">Select a sticker you own...</option>
+                                        {myAlbums.map((album) =>
+                                            album.stickers
+                                                .map((sticker) => (
+                                                    <option key={sticker.id} value={sticker.id}>
+                                                        {album.name} - {sticker.name} ({sticker.latinName})
+                                                    </option>
+                                                ))
+                                        )}
+                                    </select>
+                                </div>
+
+                                {/* Select Sticker to Request */}
+                                {selectedReceiver && (
+                                    <div>
+                                        <label className="block text-sm font-semibold mb-2">
+                                            You want: <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            value={selectedRequestedSticker || ''}
+                                            onChange={(e) => setSelectedRequestedSticker(Number(e.target.value))}
+                                            className="w-full border rounded-lg px-3 py-2"
+                                            disabled={loading || receiverAlbums.length === 0}
+                                        >
+                                            <option value="">Select a sticker they own...</option>
+                                            {receiverAlbums.map((album) =>
+                                                album.stickers
+                                                    .map((sticker) => (
+                                                        <option key={sticker.id} value={sticker.id}>
+                                                            {album.name} - {sticker.name} ({sticker.latinName})
+                                                        </option>
+                                                    ))
+                                            )}
+                                        </select>
+                                    </div>
+                                )}
+
+                                {/* Message */}
+                                <div>
+                                    <label className="block text-sm font-semibold mb-2">
+                                        Message (optional)
+                                    </label>
+                                    <textarea
+                                        value={tradeMessage}
+                                        onChange={(e) => setTradeMessage(e.target.value)}
+                                        className="w-full border rounded-lg px-3 py-2"
+                                        rows={3}
+                                        placeholder="Add a message to your trade offer..."
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex gap-3 justify-end">
+                                    <button
+                                        onClick={() => {
+                                            setShowCreateModal(false);
+                                            resetCreateForm();
+                                        }}
+                                        className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                                        disabled={loading}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleCreateTrade}
+                                        className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={loading || !selectedReceiver || !selectedOfferedSticker || !selectedRequestedSticker}
+                                    >
+                                        {loading ? 'Sending...' : 'Send Trade Offer'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
