@@ -1,4 +1,4 @@
-package com.stickersafari.entity;
+package com.stickersafari.enums;
 
 public enum AlbumStatus {
     PENDING,    // Album created but not published (may not have stickers yet)

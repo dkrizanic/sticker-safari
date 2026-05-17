@@ -1,4 +1,4 @@
-package com.stickersafari.entity;
+package com.stickersafari.enums;
 
 /**
  * Enum representing the status of a trade offer

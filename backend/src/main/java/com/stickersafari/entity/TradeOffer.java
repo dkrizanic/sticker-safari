@@ -1,5 +1,6 @@
 package com.stickersafari.entity;
 
+import com.stickersafari.enums.TradeOfferStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

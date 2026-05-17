@@ -1,6 +1,6 @@
 package com.stickersafari.dto;
 
-import com.stickersafari.entity.AlbumStatus;
+import com.stickersafari.enums.AlbumStatus;
 import lombok.Data;
 
 import java.util.List;

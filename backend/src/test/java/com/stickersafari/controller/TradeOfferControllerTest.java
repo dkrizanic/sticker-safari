@@ -4,7 +4,7 @@ import com.stickersafari.dto.*;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.entity.TradeOffer;
-import com.stickersafari.entity.TradeOfferStatus;
+import com.stickersafari.enums.TradeOfferStatus;
 import com.stickersafari.mapper.TradeOfferMapper;
 import com.stickersafari.service.TradingService;
 import org.junit.jupiter.api.BeforeEach;

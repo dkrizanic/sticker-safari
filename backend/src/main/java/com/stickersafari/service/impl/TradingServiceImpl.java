@@ -4,6 +4,7 @@ import com.stickersafari.dto.AnswerPendingTradeOfferRequest;
 import com.stickersafari.dto.GlobalTradeOfferRequest;
 import com.stickersafari.dto.SpecificTradeOfferRequest;
 import com.stickersafari.entity.*;
+import com.stickersafari.enums.TradeOfferStatus;
 import com.stickersafari.exception.EntityNotFoundException;
 import com.stickersafari.exception.TradeOfferException;
 import com.stickersafari.repository.TradeOfferRepository;

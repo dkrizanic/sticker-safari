@@ -2,7 +2,7 @@ package com.stickersafari.service.impl;
 
 import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.entity.Collector;
-import com.stickersafari.entity.Role;
+import com.stickersafari.enums.Role;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.entity.User;
 import com.stickersafari.exception.EntityNotFoundException;

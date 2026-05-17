@@ -3,7 +3,7 @@ package com.stickersafari.service.impl;
 import com.stickersafari.dto.AlbumCompletionResponse;
 import com.stickersafari.dto.AlbumRequest;
 import com.stickersafari.entity.Album;
-import com.stickersafari.entity.AlbumStatus;
+import com.stickersafari.enums.AlbumStatus;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.CompletedAlbum;
 import com.stickersafari.entity.Notification;

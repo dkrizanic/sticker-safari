@@ -2,7 +2,7 @@ package com.stickersafari.repository;
 
 import com.stickersafari.entity.TradeOffer;
 import com.stickersafari.entity.TradeOfferKey;
-import com.stickersafari.entity.TradeOfferStatus;
+import com.stickersafari.enums.TradeOfferStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

@@ -1,4 +1,4 @@
-package com.stickersafari.entity;
+package com.stickersafari.enums;
 
 public enum Role {
     ADMIN,

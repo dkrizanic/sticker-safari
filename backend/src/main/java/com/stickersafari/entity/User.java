@@ -1,5 +1,6 @@
 package com.stickersafari.entity;
 
+import com.stickersafari.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

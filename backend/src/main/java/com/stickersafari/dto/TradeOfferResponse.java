@@ -1,6 +1,6 @@
 package com.stickersafari.dto;
 
-import com.stickersafari.entity.TradeOfferStatus;
+import com.stickersafari.enums.TradeOfferStatus;
 import lombok.Data;
 
 @Data
