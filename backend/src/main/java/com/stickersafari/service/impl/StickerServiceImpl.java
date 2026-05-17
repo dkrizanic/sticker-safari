@@ -15,6 +15,8 @@ import com.stickersafari.service.NotificationService;
 import com.stickersafari.service.StickerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -205,5 +207,28 @@ public class StickerServiceImpl implements StickerService {
         // Cannot change album via update (as per requirements)
         
         return stickerRepository.save(sticker);
+    }
+
+    @Override
+    public Page<Sticker> getAllStickersWithPagination(Pageable pageable) {
+        log.debug("Getting all stickers with pagination: page {}, size {}", pageable.getPageNumber(), pageable.getPageSize());
+        return stickerRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<Sticker> searchStickers(String search, Pageable pageable) {
+        log.debug("Searching stickers with query '{}' and pagination: page {}, size {}", 
+                  search, pageable.getPageNumber(), pageable.getPageSize());
+        if (search == null || search.trim().isEmpty()) {
+            return getAllStickersWithPagination(pageable);
+        }
+        return stickerRepository.searchStickers(search.trim(), pageable);
+    }
+
+    @Override
+    public Page<Sticker> getStickersOfAlbumWithPagination(Long albumId, Pageable pageable) {
+        log.debug("Getting stickers for album ID {} with pagination: page {}, size {}", 
+                  albumId, pageable.getPageNumber(), pageable.getPageSize());
+        return stickerRepository.findByAlbumIdWithPagination(albumId, pageable);
     }
 }

@@ -15,6 +15,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 
 import java.util.*;
@@ -148,5 +152,225 @@ class StickerControllerTest {
         assertThrows(NoSuchElementException.class, () -> {
             stickerController.openPack(1L, 999L, 5);
         });
+    }
+
+    @Test
+    @DisplayName("Admin endpoint: Get paginated stickers without filters")
+    void testGetStickersPaginatedNoFilters() {
+        // Given
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
+        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
+        
+        when(stickerService.getAllStickersWithPagination(any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
+            Sticker sticker = invocation.getArgument(0);
+            StickerResponse response = new StickerResponse();
+            response.setId(sticker.getId());
+            response.setName(sticker.getName());
+            return response;
+        });
+
+        // When
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+            0, 10, "id", "asc", null, null
+        );
+
+        // Then
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        
+        Map<String, Object> response = responseEntity.getBody();
+        assertNotNull(response);
+        assertEquals(0, response.get("currentPage"));
+        assertEquals(5, response.get("totalItems"));
+        assertEquals(1, response.get("totalPages"));
+        
+        @SuppressWarnings("unchecked")
+        List<StickerResponse> stickers = (List<StickerResponse>) response.get("stickers");
+        assertEquals(5, stickers.size());
+        
+        verify(stickerService, times(1)).getAllStickersWithPagination(any());
+    }
+
+    @Test
+    @DisplayName("Admin endpoint: Search stickers with query")
+    void testSearchStickersPaginated() {
+        // Given
+        String searchQuery = "Lion";
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
+        
+        Sticker lion = new Sticker();
+        lion.setId(1L);
+        lion.setName("Lion");
+        lion.setLatinName("Panthera leo");
+        lion.setAlbum(testAlbum);
+        
+        List<Sticker> searchResults = Collections.singletonList(lion);
+        Page<Sticker> stickerPage = new PageImpl<>(searchResults, pageRequest, searchResults.size());
+        
+        when(stickerService.searchStickers(eq(searchQuery), any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
+            Sticker sticker = invocation.getArgument(0);
+            StickerResponse response = new StickerResponse();
+            response.setId(sticker.getId());
+            response.setName(sticker.getName());
+            response.setLatinName(sticker.getLatinName());
+            return response;
+        });
+
+        // When
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+            0, 10, "name", "asc", searchQuery, null
+        );
+
+        // Then
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        
+        Map<String, Object> response = responseEntity.getBody();
+        assertNotNull(response);
+        assertEquals(1, response.get("totalItems"));
+        
+        @SuppressWarnings("unchecked")
+        List<StickerResponse> stickers = (List<StickerResponse>) response.get("stickers");
+        assertEquals(1, stickers.size());
+        assertEquals("Lion", stickers.get(0).getName());
+        
+        verify(stickerService, times(1)).searchStickers(eq(searchQuery), any());
+    }
+
+    @Test
+    @DisplayName("Admin endpoint: Filter stickers by album")
+    void testGetStickersPaginatedByAlbum() {
+        // Given
+        Long albumId = 1L;
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
+        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
+        
+        when(stickerService.getStickersOfAlbumWithPagination(eq(albumId), any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
+            Sticker sticker = invocation.getArgument(0);
+            StickerResponse response = new StickerResponse();
+            response.setId(sticker.getId());
+            response.setName(sticker.getName());
+            return response;
+        });
+
+        // When
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+            0, 10, "id", "asc", null, albumId
+        );
+
+        // Then
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        
+        Map<String, Object> response = responseEntity.getBody();
+        assertNotNull(response);
+        assertEquals(5, response.get("totalItems"));
+        
+        verify(stickerService, times(1)).getStickersOfAlbumWithPagination(eq(albumId), any());
+    }
+
+    @Test
+    @DisplayName("Admin endpoint: Sort stickers descending")
+    void testGetStickersPaginatedSortDescending() {
+        // Given
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "name"));
+        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
+        
+        when(stickerService.getAllStickersWithPagination(any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
+            Sticker sticker = invocation.getArgument(0);
+            StickerResponse response = new StickerResponse();
+            response.setId(sticker.getId());
+            response.setName(sticker.getName());
+            return response;
+        });
+
+        // When
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+            0, 10, "name", "desc", null, null
+        );
+
+        // Then
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        
+        verify(stickerService, times(1)).getAllStickersWithPagination(argThat(pageable -> 
+            pageable.getSort().getOrderFor("name").getDirection() == Sort.Direction.DESC
+        ));
+    }
+
+    @Test
+    @DisplayName("Admin endpoint: Search with album filter combined")
+    void testSearchStickersWithAlbumFilter() {
+        // Given
+        String searchQuery = "Lion";
+        Long albumId = 1L;
+        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
+        
+        Sticker lion = new Sticker();
+        lion.setId(1L);
+        lion.setName("Lion");
+        lion.setAlbum(testAlbum);
+        
+        List<Sticker> searchResults = Collections.singletonList(lion);
+        Page<Sticker> stickerPage = new PageImpl<>(searchResults, pageRequest, searchResults.size());
+        
+        when(stickerService.searchStickers(eq(searchQuery), any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
+            Sticker sticker = invocation.getArgument(0);
+            StickerResponse response = new StickerResponse();
+            response.setId(sticker.getId());
+            response.setName(sticker.getName());
+            return response;
+        });
+
+        // When
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+            0, 10, "id", "asc", searchQuery, albumId
+        );
+
+        // Then
+        assertNotNull(responseEntity);
+        assertEquals(200, responseEntity.getStatusCodeValue());
+        
+        // Note: Current implementation prioritizes search over album filter
+        verify(stickerService, times(1)).searchStickers(eq(searchQuery), any());
+        verify(stickerService, never()).getStickersOfAlbumWithPagination(anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("Admin endpoint: Pagination with different page sizes")
+    void testGetStickersPaginatedDifferentPageSizes() {
+        // Given
+        int pageSize = 5;
+        PageRequest pageRequest = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
+        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, 10);
+        
+        when(stickerService.getAllStickersWithPagination(any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
+            Sticker sticker = invocation.getArgument(0);
+            StickerResponse response = new StickerResponse();
+            response.setId(sticker.getId());
+            response.setName(sticker.getName());
+            return response;
+        });
+
+        // When
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersPaginated(
+            0, pageSize, "id", "asc", null, null
+        );
+
+        // Then
+        assertNotNull(responseEntity);
+        Map<String, Object> response = responseEntity.getBody();
+        assertEquals(10, response.get("totalItems"));
+        assertEquals(2, response.get("totalPages"));
+        
+        verify(stickerService, times(1)).getAllStickersWithPagination(argThat(pageable -> 
+            pageable.getPageSize() == pageSize
+        ));
     }
 }

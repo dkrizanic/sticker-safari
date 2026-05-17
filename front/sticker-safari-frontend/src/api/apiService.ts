@@ -203,6 +203,34 @@ const apiService = {
         return response.data;
     },
 
+    getStickersPaginated: async (
+        page: number = 0,
+        size: number = 10,
+        sortBy: string = 'id',
+        sortDir: string = 'asc',
+        search?: string,
+        albumId?: number
+    ): Promise<{
+        stickers: StickerResponse[];
+        currentPage: number;
+        totalItems: number;
+        totalPages: number;
+    }> => {
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sortBy', sortBy);
+        params.append('sortDir', sortDir);
+        if (search && search.trim()) {
+            params.append('search', search.trim());
+        }
+        if (albumId !== undefined && albumId !== null) {
+            params.append('albumId', albumId.toString());
+        }
+        const response = await api.get(`/stickers/admin/paginated?${params.toString()}`);
+        return response.data;
+    },
+
     createSticker: async (sticker: Omit<StickerResponse, 'id'>): Promise<StickerResponse> => {
         const response = await api.post('/stickers', sticker);
         return response.data;

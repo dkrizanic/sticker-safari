@@ -7,11 +7,17 @@ import com.stickersafari.mapper.StickerMapper;
 import com.stickersafari.service.StickerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("stickers")
@@ -34,6 +40,41 @@ public class StickerController {
         log.debug("Getting sticker with ID: {}", id);
         Sticker sticker = stickerService.findOne(id);
         return ResponseEntity.ok(stickerMapper.toResponse(sticker));
+    }
+
+    // Admin endpoint for pagination and search
+    @GetMapping("/admin/paginated")
+    public ResponseEntity<Map<String, Object>> getStickersWithPagination(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long albumId) {
+        
+        log.debug("Getting stickers with pagination - page: {}, size: {}, sort: {} {}, search: {}, albumId: {}", 
+                  page, size, sortBy, sortDir, search, albumId);
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<Sticker> stickerPage;
+        
+        if (search != null && !search.trim().isEmpty()) {
+            stickerPage = stickerService.searchStickers(search, pageable);
+        } else if (albumId != null) {
+            stickerPage = stickerService.getStickersOfAlbumWithPagination(albumId, pageable);
+        } else {
+            stickerPage = stickerService.getAllStickersWithPagination(pageable);
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("stickers", stickerMapper.toResponseList(stickerPage.getContent()));
+        response.put("currentPage", stickerPage.getNumber());
+        response.put("totalItems", stickerPage.getTotalElements());
+        response.put("totalPages", stickerPage.getTotalPages());
+        
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/open/{albumId}/collector/{userId}")

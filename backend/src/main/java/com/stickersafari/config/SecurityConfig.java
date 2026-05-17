@@ -68,7 +68,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/album/**").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.POST, "/stickers").hasRole(Role.ADMIN.name())
                         .requestMatchers(HttpMethod.PUT, "/stickers/**").hasRole(Role.ADMIN.name())
-                        .requestMatchers(HttpMethod.DELETE, "/stickers/**").hasRole(Role.ADMIN.name())
+                        // Note: DELETE not allowed for stickers - data integrity
                         .requestMatchers(HttpMethod.PUT, "/collectors/**").hasAnyRole(Role.ADMIN.name(), Role.COLLECTOR.name())
                         .requestMatchers(HttpMethod.DELETE, "/collectors/**").hasAnyRole(Role.ADMIN.name(), Role.COLLECTOR.name())
                         

@@ -2,6 +2,8 @@ package com.stickersafari.service;
 
 import com.stickersafari.dto.StickerRequest;
 import com.stickersafari.entity.Sticker;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -20,6 +22,9 @@ public interface StickerService {
     
     // CRUD operations
     List<Sticker> getAllStickers();
+    Page<Sticker> getAllStickersWithPagination(Pageable pageable);
+    Page<Sticker> searchStickers(String search, Pageable pageable);
+    Page<Sticker> getStickersOfAlbumWithPagination(Long albumId, Pageable pageable);
     Sticker createSticker(StickerRequest request);
     Sticker updateSticker(Long stickerId, StickerRequest request);
 }
