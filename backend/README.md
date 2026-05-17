@@ -22,11 +22,6 @@ Potrebno je i pratiti koje je notifikacije korisnik pročitao i omogućiti dohva
 - Ažuriranje: U slučaju da se prilikom ažuriranja albuma iz njega makne sličica, ta sličica se ne briše nego ostaje u sustavu da se može koristiti u nekom novom albumu.
 - Brisanje: Ako se obriše album, sličice se ne brišu nego ostaju u sustavu da se mogu koristiti u nekom novom albumu
 
-### Collector
-- Dodavanje: Dodavanje novog korisnika
-- Ažuriranje: Ažuriranje korisničkog imena
-- Brisanje: Brisanje korisnika iz sustava
-
 ### Sticker
 - Dodavanje: Dodavanje nove sličice, prilikom dodavanja može se ali ne mora navesti album kojem pripada sličica.
 - Ažuriranje: Ažuriranjem sličice ne može se promijeniti album sličice.

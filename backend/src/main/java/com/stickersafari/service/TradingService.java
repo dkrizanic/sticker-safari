@@ -19,4 +19,6 @@ public interface TradingService {
     TradeOffer acceptTradeOffer(AnswerPendingTradeOfferRequest request) throws Exception;
 
     TradeOffer refusePendingTradeOffer(AnswerPendingTradeOfferRequest request);
+
+    void cancelTradeOffer(Long senderId, Long receiverId, Long offeredStickerId, Long receivedStickerId);
 }

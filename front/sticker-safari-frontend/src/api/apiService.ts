@@ -165,6 +165,10 @@ const apiService = {
         return response.data;
     },
 
+    cancelTradeOffer: async (senderId: number, receiverId: number, offeredStickerId: number, receivedStickerId: number): Promise<void> => {
+        await api.delete(`/tradeoffer/${senderId}/${receiverId}/${offeredStickerId}/${receivedStickerId}`);
+    },
+
     // Notification endpoints
     getNotifications: async (collectorId: number): Promise<any[]> => {
         const response = await api.get(`/notifications/${collectorId}?read=true`);

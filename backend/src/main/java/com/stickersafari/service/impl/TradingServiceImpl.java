@@ -182,4 +182,25 @@ public class TradingServiceImpl implements TradingService {
 
         return tradeOffer;
     }
+
+    @Override
+    @Transactional
+    public void cancelTradeOffer(Long senderId, Long receiverId, Long offeredStickerId, Long receivedStickerId) {
+        log.info("Canceling trade offer: sender={}, receiver={}, offered={}, received={}", 
+                senderId, receiverId, offeredStickerId, receivedStickerId);
+        
+        TradeOffer tradeOffer = tradeOfferRepository.findTradeOffer(
+                senderId, receiverId, offeredStickerId, receivedStickerId);
+        
+        if (tradeOffer == null) {
+            throw new EntityNotFoundException("Trade offer not found");
+        }
+        
+        if (tradeOffer.getStatus() != TradeOfferStatus.PENDING) {
+            throw new IllegalStateException("Can only cancel pending trade offers");
+        }
+        
+        tradeOfferRepository.delete(tradeOffer);
+        log.info("Trade offer canceled successfully");
+    }
 }

@@ -63,4 +63,15 @@ public class TradeOfferController {
         TradeOfferResponse response = tradeOfferMapper.toResponse(tradingService.refusePendingTradeOffer(request));
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{senderId}/{receiverId}/{offeredStickerId}/{receivedStickerId}")
+    public ResponseEntity<Void> cancelTradeOffer(
+            @PathVariable("senderId") Long senderId,
+            @PathVariable("receiverId") Long receiverId,
+            @PathVariable("offeredStickerId") Long offeredStickerId,
+            @PathVariable("receivedStickerId") Long receivedStickerId) {
+        log.info("Canceling trade offer from {} to {}", senderId, receiverId);
+        tradingService.cancelTradeOffer(senderId, receiverId, offeredStickerId, receivedStickerId);
+        return ResponseEntity.noContent().build();
+    }
 }

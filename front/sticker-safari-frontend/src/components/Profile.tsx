@@ -133,13 +133,6 @@ const Profile = (): JSX.Element => {
 
                     {/* Delete Profile Section */}
                     <div>
-                        <h2 className="text-xl font-semibold text-red-600 mb-4">
-                            ⚠️ Danger Zone
-                        </h2>
-                        <p className="text-gray-600 mb-4">
-                            Once you delete your profile, all your stickers, trade offers, and progress will be permanently lost. This action cannot be undone.
-                        </p>
-                        
                         {!showDeleteConfirm ? (
                             <button
                                 onClick={() => setShowDeleteConfirm(true)}

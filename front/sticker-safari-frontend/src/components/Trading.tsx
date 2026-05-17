@@ -82,6 +82,24 @@ const Trading = (): JSX.Element => {
         }
     };
 
+    const handleCancelOffer = async (offer: TradeOfferResponse) => {
+        if (!currentUser?.id) return;
+
+        try {
+            await apiService.cancelTradeOffer(
+                offer.sender.id,
+                offer.receiver.id,
+                offer.offeredSticker.id,
+                offer.receivedSticker.id
+            );
+            addToast('Trade offer canceled', 'info');
+            fetchTradeOffers();
+        } catch (error) {
+            console.error('Failed to cancel trade offer:', error);
+            addToast('Failed to cancel trade offer', 'error');
+        }
+    };
+
     const handleOpenCreateModal = async () => {
         setShowCreateModal(true);
         setLoading(true);
@@ -327,6 +345,16 @@ const Trading = (): JSX.Element => {
                                                         Status: <span className="font-semibold">{offer.status}</span>
                                                     </p>
                                                 </div>
+                                                {offer.status === 'PENDING' && (
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleCancelOffer(offer)}
+                                                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
