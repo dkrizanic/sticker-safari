@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import apiService from '../api/apiService';
 import { Sticker } from '../types';
 import { useUser } from '../context/UserContext';
+import { useNavigate } from 'react-router-dom';
 
 
 const PackOpening = (): JSX.Element => {
@@ -9,12 +10,26 @@ const PackOpening = (): JSX.Element => {
     const [selectedAlbum, setSelectedAlbum] = useState<string>('1');
     const [packResults, setPackResults] = useState<Sticker[]>([]);
     const { currentUser } = useUser();
+    const navigate = useNavigate();
 
     const [hasResults, setHasResults] = useState(false);
     
+    // All hooks must be called before any conditional returns
     useEffect(() => {
         setHasResults(packResults.length > 0);
     }, [packResults]);
+
+    // Redirect if admin tries to access
+    useEffect(() => {
+        if (currentUser?.role === 'ADMIN') {
+            navigate('/admin');
+        }
+    }, [currentUser, navigate]);
+
+    // Don't render if admin
+    if (currentUser?.role === 'ADMIN') {
+        return <></>;
+    }
 
     const handleOpenPack = async () => {
         if (!currentUser?.id) {

@@ -43,11 +43,11 @@ const AdminDashboard: React.FC = () => {
                                 Create, update, and delete album collections
                             </p>
                             <div className="flex flex-col space-y-2">
-                                <button className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors">
-                                    View All Albums
-                                </button>
-                                <button className="bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-800 transition-colors">
-                                    Create New Album
+                                <button 
+                                    onClick={() => navigate('/admin/albums')}
+                                    className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+                                >
+                                    Manage Albums
                                 </button>
                             </div>
                         </div>
@@ -60,11 +60,11 @@ const AdminDashboard: React.FC = () => {
                                 Add, update, and manage sticker content
                             </p>
                             <div className="flex flex-col space-y-2">
-                                <button className="bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-green-50 transition-colors">
-                                    View All Stickers
-                                </button>
-                                <button className="bg-green-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-800 transition-colors">
-                                    Create New Sticker
+                                <button 
+                                    onClick={() => navigate('/admin/stickers')}
+                                    className="bg-white text-green-600 px-4 py-2 rounded-lg font-semibold hover:bg-green-50 transition-colors"
+                                >
+                                    Manage Stickers
                                 </button>
                             </div>
                         </div>
@@ -77,11 +77,11 @@ const AdminDashboard: React.FC = () => {
                                 View and manage collector accounts
                             </p>
                             <div className="flex flex-col space-y-2">
-                                <button className="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-purple-50 transition-colors">
-                                    View All Collectors
-                                </button>
-                                <button className="bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-800 transition-colors">
-                                    Manage Users
+                                <button 
+                                    onClick={() => navigate('/admin/collectors')}
+                                    className="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-purple-50 transition-colors"
+                                >
+                                    Manage Collectors
                                 </button>
                             </div>
                         </div>

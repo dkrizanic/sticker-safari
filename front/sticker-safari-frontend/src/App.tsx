@@ -7,6 +7,9 @@ import Trading from "./components/Trading"
 import PackOpening from "./components/PackOpening"
 import LandingPage from "./components/LandingPage"
 import AdminDashboard from "./components/AdminDashboard"
+import AlbumManagement from "./components/admin/AlbumManagement"
+import StickerManagement from "./components/admin/StickerManagement"
+import CollectorManagement from "./components/admin/CollectorManagement"
 import { UserProvider, useUser } from './context/UserContext';
 import { ToastProvider } from './context/ToastContext';
 import ToastContainer from './components/ToastContainer';
@@ -33,6 +36,9 @@ function AppContent(): JSX.Element {
         <Route path="/trading" element={<Trading/>} />
         <Route path="/pack-opening" element={<PackOpening/>}/>
         <Route path="/admin" element={<AdminDashboard/>}/>
+        <Route path="/admin/albums" element={<AlbumManagement/>}/>
+        <Route path="/admin/stickers" element={<StickerManagement/>}/>
+        <Route path="/admin/collectors" element={<CollectorManagement/>}/>
       </Routes>
     </div>
   );

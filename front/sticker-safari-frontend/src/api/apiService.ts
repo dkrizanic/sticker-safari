@@ -163,6 +163,52 @@ const apiService = {
     markNotificationAsRead: async (notificationId: number): Promise<void> => {
         await api.put(`/notifications/${notificationId}/read`);
     },
+
+    // Admin - Album Management
+    createAlbum: async (name: string): Promise<AlbumResponse> => {
+        const response = await api.post('/album', { name });
+        return response.data;
+    },
+
+    updateAlbum: async (id: number, name: string): Promise<AlbumResponse> => {
+        const response = await api.put(`/album/${id}`, { name });
+        return response.data;
+    },
+
+    deleteAlbum: async (id: number): Promise<void> => {
+        await api.delete(`/album/${id}`);
+    },
+
+    // Admin - Sticker Management
+    getAllStickers: async (): Promise<StickerResponse[]> => {
+        const response = await api.get('/stickers');
+        return response.data;
+    },
+
+    createSticker: async (sticker: Omit<StickerResponse, 'id'>): Promise<StickerResponse> => {
+        const response = await api.post('/stickers', sticker);
+        return response.data;
+    },
+
+    updateSticker: async (id: number, sticker: Partial<Omit<StickerResponse, 'id'>>): Promise<StickerResponse> => {
+        const response = await api.put(`/stickers/${id}`, sticker);
+        return response.data;
+    },
+
+    // Admin - Collector Management
+    getAllCollectors: async (): Promise<CollectorResponse[]> => {
+        const response = await api.get('/collectors');
+        return response.data;
+    },
+
+    updateCollector: async (id: number, username: string): Promise<CollectorResponse> => {
+        const response = await api.put(`/collectors/${id}`, { username });
+        return response.data;
+    },
+
+    deleteCollector: async (id: number): Promise<void> => {
+        await api.delete(`/collectors/${id}`);
+    },
 };
 
 export default apiService;
