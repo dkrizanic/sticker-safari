@@ -1,5 +1,6 @@
 package com.stickersafari.service;
 
+import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.dto.RankingEntry;
 import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
@@ -30,6 +31,9 @@ class RankingIntegrationTest {
     private RankingService rankingService;
 
     @Autowired
+    private CollectorService collectorService;
+
+    @Autowired
     private CollectorRepository collectorRepository;
 
     @Autowired
@@ -45,19 +49,22 @@ class RankingIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Create test collectors
-        collector1 = new Collector();
-        collector1.setUsername("TopCollector");
+        // Create test collectors using service (handles User creation)
+        CollectorRequest request1 = new CollectorRequest();
+        request1.setUsername("TopCollector");
+        collector1 = collectorService.createCollector(request1);
         collector1.setStars(5);
         collector1 = collectorRepository.save(collector1);
 
-        collector2 = new Collector();
-        collector2.setUsername("MidCollector");
+        CollectorRequest request2 = new CollectorRequest();
+        request2.setUsername("MidCollector");
+        collector2 = collectorService.createCollector(request2);
         collector2.setStars(3);
         collector2 = collectorRepository.save(collector2);
 
-        collector3 = new Collector();
-        collector3.setUsername("LowCollector");
+        CollectorRequest request3 = new CollectorRequest();
+        request3.setUsername("LowCollector");
+        collector3 = collectorService.createCollector(request3);
         collector3.setStars(1);
         collector3 = collectorRepository.save(collector3);
 
