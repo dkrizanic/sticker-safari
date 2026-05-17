@@ -554,13 +554,33 @@ const StickerManagement: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Album
             </label>
-            <input
-              type="text"
-              value={formData.albumId ? albums.find(a => a.id === formData.albumId)?.name || 'Unknown Album' : 'No Album'}
-              disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
-            />
-            <p className="text-xs text-gray-500 mt-1">⚠️ Album assignment cannot be changed after creation (per requirements).</p>
+            {selectedSticker?.albumId ? (
+              <>
+                <input
+                  type="text"
+                  value={albums.find(a => a.id === formData.albumId)?.name || 'Unknown Album'}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+                <p className="text-xs text-gray-500 mt-1">⚠️ Album assignment cannot be changed after it has been set.</p>
+              </>
+            ) : (
+              <>
+                <select
+                  value={formData.albumId || ''}
+                  onChange={(e) => setFormData({ ...formData, albumId: e.target.value ? Number(e.target.value) : undefined })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">-- No Album --</option>
+                  {albums.map(album => (
+                    <option key={album.id} value={album.id}>
+                      {album.name} (ID: {album.id})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">✅ You can assign this sticker to an album. Once assigned, it cannot be changed.</p>
+              </>
+            )}
           </div>
         </FormModal>
       </div>
