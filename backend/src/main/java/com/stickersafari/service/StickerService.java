@@ -25,6 +25,7 @@ public interface StickerService {
     Page<Sticker> getAllStickersWithPagination(Pageable pageable);
     Page<Sticker> searchStickers(String search, Pageable pageable);
     Page<Sticker> getStickersOfAlbumWithPagination(Long albumId, Pageable pageable);
+    Page<Sticker> getStickersWithoutAlbumWithPagination(Pageable pageable);
     Sticker createSticker(StickerRequest request);
     Sticker updateSticker(Long stickerId, StickerRequest request);
 }

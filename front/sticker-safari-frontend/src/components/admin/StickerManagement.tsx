@@ -95,7 +95,11 @@ const StickerManagement: React.FC = () => {
   };
 
   const handleAlbumFilterChange = (albumId: string) => {
-    setSelectedAlbumId(albumId ? Number(albumId) : undefined);
+    if (albumId === 'none') {
+      setSelectedAlbumId(-1); // -1 represents "no album" filter
+    } else {
+      setSelectedAlbumId(albumId ? Number(albumId) : undefined);
+    }
     setCurrentPage(0); // Reset to first page when filtering
   };
 
@@ -276,11 +280,12 @@ const StickerManagement: React.FC = () => {
                 Filter by Album
               </label>
               <select
-                value={selectedAlbumId || ''}
+                value={selectedAlbumId === -1 ? 'none' : selectedAlbumId || ''}
                 onChange={(e) => handleAlbumFilterChange(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Albums</option>
+                <option value="none">No Album</option>
                 {albums.map(album => (
                   <option key={album.id} value={album.id}>
                     {album.name}

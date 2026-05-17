@@ -239,4 +239,11 @@ public class StickerServiceImpl implements StickerService {
                   albumId, pageable.getPageNumber(), pageable.getPageSize());
         return stickerRepository.findByAlbumIdWithPagination(albumId, pageable);
     }
+    
+    @Override
+    public Page<Sticker> getStickersWithoutAlbumWithPagination(Pageable pageable) {
+        log.debug("Getting stickers without album with pagination: page {}, size {}", 
+                  pageable.getPageNumber(), pageable.getPageSize());
+        return stickerRepository.findByAlbumIsNullWithPagination(pageable);
+    }
 }

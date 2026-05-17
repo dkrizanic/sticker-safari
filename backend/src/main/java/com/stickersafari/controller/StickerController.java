@@ -63,7 +63,12 @@ public class StickerController {
         if (search != null && !search.trim().isEmpty()) {
             stickerPage = stickerService.searchStickers(search, pageable);
         } else if (albumId != null) {
-            stickerPage = stickerService.getStickersOfAlbumWithPagination(albumId, pageable);
+            if (albumId == -1) {
+                // -1 means filter for stickers without albums
+                stickerPage = stickerService.getStickersWithoutAlbumWithPagination(pageable);
+            } else {
+                stickerPage = stickerService.getStickersOfAlbumWithPagination(albumId, pageable);
+            }
         } else {
             stickerPage = stickerService.getAllStickersWithPagination(pageable);
         }

@@ -24,4 +24,7 @@ public interface StickerRepository extends JpaRepository<Sticker, Long> {
     
     @Query("SELECT s FROM Sticker s WHERE s.album.id = :albumId")
     Page<Sticker> findByAlbumIdWithPagination(@Param("albumId") Long albumId, Pageable pageable);
+    
+    @Query("SELECT s FROM Sticker s WHERE s.album IS NULL")
+    Page<Sticker> findByAlbumIsNullWithPagination(Pageable pageable);
 }

@@ -229,6 +229,7 @@ const apiService = {
             params.append('search', search.trim());
         }
         if (albumId !== undefined && albumId !== null) {
+            // -1 means "filter for stickers without albums"
             params.append('albumId', albumId.toString());
         }
         const response = await api.get(`/stickers/admin/paginated?${params.toString()}`);
