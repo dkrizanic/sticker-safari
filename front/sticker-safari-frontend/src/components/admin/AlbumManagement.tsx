@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import apiService, { AlbumResponse } from '../../api/apiService';
+import apiService, { AlbumResponse, StickerResponse } from '../../api/apiService';
+import { AlbumStatus } from '../../types';
 import { useToast } from '../../context/ToastContext';
 import AdminTable from './shared/AdminTable';
 import FormModal from './shared/FormModal';
@@ -15,8 +16,10 @@ const AlbumManagement: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<AlbumResponse | null>(null);
-  const [formData, setFormData] = useState({ name: '' });
+  const [formData, setFormData] = useState({ name: '', status: AlbumStatus.PENDING });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableStickers, setAvailableStickers] = useState<StickerResponse[]>([]);
+  const [selectedStickerIds, setSelectedStickerIds] = useState<number[]>([]);
 
   useEffect(() => {
     loadAlbums();
@@ -35,13 +38,23 @@ const AlbumManagement: React.FC = () => {
   };
 
   const handleCreate = () => {
-    setFormData({ name: '' });
+    setFormData({ name: '', status: AlbumStatus.PENDING });
     setShowCreateModal(true);
   };
 
-  const handleEdit = (album: AlbumResponse) => {
+  const handleEdit = async (album: AlbumResponse) => {
     setSelectedAlbum(album);
-    setFormData({ name: album.name });
+    setFormData({ name: album.name, status: album.status });
+    setSelectedStickerIds(album.stickers.map(s => s.id));
+    
+    // Fetch available stickers (without albums)
+    try {
+      const response = await apiService.getStickersPaginated(0, 1000, 'id', 'asc', '', -1);
+      setAvailableStickers(response.stickers);
+    } catch (error) {
+      addToast('Failed to load available stickers', 'error');
+    }
+    
     setShowEditModal(true);
   };
 
@@ -77,7 +90,12 @@ const AlbumManagement: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      await apiService.updateAlbum(selectedAlbum.id, formData.name);
+      await apiService.updateAlbum(
+        selectedAlbum.id, 
+        formData.name, 
+        formData.status,
+        selectedStickerIds
+      );
       addToast('Album updated successfully', 'success');
       setShowEditModal(false);
       loadAlbums();
@@ -180,7 +198,7 @@ const AlbumManagement: React.FC = () => {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ name: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter album name"
               required
@@ -197,18 +215,97 @@ const AlbumManagement: React.FC = () => {
           isSubmitting={isSubmitting}
           submitText="Update"
         >
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Album Name *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter album name"
-              required
-            />
+          <div className="space-y-6">
+            {/* Album Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Album Name *
+              </label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter album name"
+                required
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Status *
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as AlbumStatus })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={AlbumStatus.PENDING}>PENDING</option>
+                <option value={AlbumStatus.PUBLISHED}>PUBLISHED</option>
+              </select>
+            </div>
+
+            {/* Current Stickers */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Stickers ({selectedAlbum?.stickers.length || 0})
+              </label>
+              <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-gray-50">
+                {selectedAlbum?.stickers && selectedAlbum.stickers.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedAlbum.stickers.map(sticker => (
+                      <div key={sticker.id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm">
+                        <span className="text-sm">
+                          <span className="font-semibold">#{sticker.id}</span> - {sticker.name}
+                        </span>
+                        <button
+                          onClick={() => setSelectedStickerIds(prev => prev.filter(id => id !== sticker.id))}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          type="button"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm text-center py-4">No stickers in this album</p>
+                )}
+              </div>
+            </div>
+
+            {/* Available Stickers */}
+            {availableStickers.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add Stickers (without albums) ({availableStickers.length})
+                </label>
+                <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-gray-50">
+                  <div className="space-y-2">
+                    {availableStickers.map(sticker => (
+                      <div key={sticker.id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm">
+                        <span className="text-sm">
+                          <span className="font-semibold">#{sticker.id}</span> - {sticker.name}
+                        </span>
+                        <button
+                          onClick={() => setSelectedStickerIds(prev => [...prev, sticker.id])}
+                          disabled={selectedStickerIds.includes(sticker.id)}
+                          className={`text-sm font-medium ${
+                            selectedStickerIds.includes(sticker.id)
+                              ? 'text-gray-400 cursor-not-allowed'
+                              : 'text-green-600 hover:text-green-800'
+                          }`}
+                          type="button"
+                        >
+                          {selectedStickerIds.includes(sticker.id) ? 'Added' : 'Add'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </FormModal>
 

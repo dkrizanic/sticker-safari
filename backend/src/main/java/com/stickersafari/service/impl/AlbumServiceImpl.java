@@ -150,8 +150,14 @@ public class AlbumServiceImpl implements AlbumService {
                     }
                 }
             }
-            
-            // Update status based on sticker count
+        }
+        
+        // Update status: manual override takes priority, otherwise auto-determine
+        if (request.getStatus() != null) {
+            album.setStatus(request.getStatus());
+            log.info("Album status manually set to: {}", request.getStatus());
+        } else if (request.getStickerIds() != null) {
+            // Auto-determine status based on sticker count only if stickers were updated
             if (album.getStickers().isEmpty()) {
                 album.setStatus(AlbumStatus.PENDING);
             } else {

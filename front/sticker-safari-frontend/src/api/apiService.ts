@@ -192,8 +192,13 @@ const apiService = {
         return response.data;
     },
 
-    updateAlbum: async (id: number, name: string): Promise<AlbumResponse> => {
-        const response = await api.put(`/album/${id}`, { name });
+    updateAlbum: async (
+        id: number, 
+        name: string, 
+        status?: AlbumStatus, 
+        stickerIds?: number[]
+    ): Promise<AlbumResponse> => {
+        const response = await api.put(`/album/${id}`, { name, status, stickerIds });
         return response.data;
     },
 
