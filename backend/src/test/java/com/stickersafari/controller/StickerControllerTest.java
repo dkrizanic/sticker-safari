@@ -82,8 +82,7 @@ class StickerControllerTest {
     @DisplayName("Bug Fix: openPack should return mutable list (not List.of())")
     void testOpenPackReturnsMutableList() {
         // Given
-        when(collectorService.findById(anyLong())).thenReturn(testCollector);
-        when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
+        when(stickerService.openPackForCollector(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
         when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
 
         // When
@@ -101,7 +100,7 @@ class StickerControllerTest {
             }
         });
         
-        verify(collectorService, times(1)).addStickersToCollector(eq(1L), anyList());
+        verify(stickerService, times(1)).openPackForCollector(eq(1L), eq(1L), eq(5));
     }
 
     @Test
@@ -111,8 +110,7 @@ class StickerControllerTest {
         int requestedSize = 3;
         List<Sticker> subset = testStickers.subList(0, requestedSize);
         List<StickerResponse> subsetResponses = testStickerResponses.subList(0, requestedSize);
-        when(collectorService.findById(anyLong())).thenReturn(testCollector);
-        when(stickerService.openPack(anyLong(), anyLong(), eq(requestedSize))).thenReturn(subset);
+        when(stickerService.openPackForCollector(anyLong(), anyLong(), eq(requestedSize))).thenReturn(subset);
         when(stickerMapper.toResponseList(subset)).thenReturn(subsetResponses);
 
         // When
@@ -122,32 +120,29 @@ class StickerControllerTest {
         // Then
         assertNotNull(response);
         assertEquals(requestedSize, response.size(), "Should return requested number of stickers");
-        verify(stickerService, times(1)).openPack(1L, 1L, requestedSize);
+        verify(stickerService, times(1)).openPackForCollector(1L, 1L, requestedSize);
     }
 
     @Test
     @DisplayName("openPack should add stickers to collector's owned stickers")
     void testOpenPackAddsStickersToCollector() {
         // Given
-        when(collectorService.findById(anyLong())).thenReturn(testCollector);
-        when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
+        when(stickerService.openPackForCollector(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
         when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
 
         // When
         stickerController.openPack(1L, 1L, 5);
 
         // Then
-        verify(collectorService, times(1)).addStickersToCollector(eq(1L), anyList());
+        verify(stickerService, times(1)).openPackForCollector(eq(1L), eq(1L), eq(5));
     }
 
     @Test
     @DisplayName("openPack should handle service exceptions")
     void testOpenPackCollectorNotFound() {
         // Given
-        when(collectorService.findById(anyLong())).thenReturn(testCollector);
-        when(stickerService.openPack(anyLong(), anyLong(), anyInt())).thenReturn(testStickers);
-        doThrow(new NoSuchElementException("Collector not found"))
-            .when(collectorService).addStickersToCollector(anyLong(), anyList());
+        when(stickerService.openPackForCollector(anyLong(), anyLong(), anyInt()))
+            .thenThrow(new NoSuchElementException("Collector not found"));
 
         // When/Then
         assertThrows(NoSuchElementException.class, () -> {

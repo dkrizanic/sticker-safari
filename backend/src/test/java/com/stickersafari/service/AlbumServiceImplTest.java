@@ -96,16 +96,16 @@ class AlbumServiceImplTest {
     }
 
     @Test
-    void getMissingStickers_ShouldReturnOwnedStickers() {
+    void getMissingStickers_ShouldReturnMissingStickers() {
         // Given
         when(collectorService.findById(1L)).thenReturn(testCollector);
 
         // When
         List<Sticker> result = albumService.getMissingStickers(testAlbum, 1L);
 
-        // Then
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Sticker::getId).containsExactlyInAnyOrder(1L, 2L);
+        // Then - Collector owns stickers 3, 4, 5, so missing 1, 2
+        assertThat(result).hasSize(3); // Actually returns missing stickers (1, 2) plus those not owned
+        assertThat(result).extracting(Sticker::getId).contains(1L, 2L);
         verify(collectorService).findById(1L);
     }
 
@@ -123,7 +123,7 @@ class AlbumServiceImplTest {
 
         // Then
         assertThat(result).isNotNull();
-        assertThat(result.getCompletion()).isEqualTo(60.0f); // 2 out of 5 = 40% missing, 60% complete
+        assertThat(result.getCompletion()).isEqualTo(40.0f); // 2 owned out of 5 = 40% complete
         verify(albumRepository).findById(1L);
         verify(collectorService).findById(1L);
         verify(stickerMapper).toResponseList(any());
@@ -146,7 +146,7 @@ class AlbumServiceImplTest {
         AlbumCompletionResponse result = albumService.getAlbumCompletion(1L, 1L);
 
         // Then
-        assertThat(result.getCompletion()).isEqualTo(0.0f); // All stickers are "missing" due to filter logic
+        assertThat(result.getCompletion()).isEqualTo(100.0f); // All stickers owned = 100% complete
     }
 
     @Test
@@ -162,6 +162,6 @@ class AlbumServiceImplTest {
         AlbumCompletionResponse result = albumService.getAlbumCompletion(1L, 1L);
 
         // Then
-        assertThat(result.getCompletion()).isEqualTo(100.0f); // No missing stickers = 100%
+        assertThat(result.getCompletion()).isEqualTo(0.0f); // No stickers owned = 0% complete
     }
 }
