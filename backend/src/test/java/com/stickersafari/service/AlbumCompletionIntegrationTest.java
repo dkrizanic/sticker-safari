@@ -155,8 +155,9 @@ class AlbumCompletionIntegrationTest {
     @Test
     @DisplayName("Stickers should be removed from collector after completion")
     void testStickersRemovedAfterCompletion() throws Exception {
-        // Given
-        int originalStickerCount = collector1.getOwnedStickers().size();
+        // Given - Refresh collector to get current state
+        Collector beforeCompletion = collectorRepository.findById(collector1.getId()).orElseThrow();
+        int originalStickerCount = beforeCompletion.getOwnedStickers().size();
         assertThat(originalStickerCount).isEqualTo(5);
 
         // When
@@ -200,14 +201,23 @@ class AlbumCompletionIntegrationTest {
     @DisplayName("Should throw exception when collector missing stickers")
     void testCompletionFailsWhenMissingStickers() {
         // Given - Collector with only some stickers
-        Collector incomplete = new Collector();
-        incomplete.setUsername("IncompleteCollector");
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername("IncompleteCollector");
+        Collector incomplete = collectorService.createCollector(request);
         incomplete.setStars(0);
         
-        Map<Long, Integer> partialStickers = new HashMap<>();
-        List<Sticker> stickers = testAlbum.getStickers();
-        partialStickers.put(stickers.get(0).getId(), 1); // Only first sticker
-        incomplete.setOwnedStickers(partialStickers);
+        // Refresh testAlbum to get stickers
+        Album refreshedAlbum = albumRepository.findById(testAlbum.getId()).orElseThrow();
+        List<Sticker> stickers = refreshedAlbum.getStickers();
+        
+        if (!stickers.isEmpty()) {
+            // Add only the first sticker
+            try {
+                incomplete.addSticker(stickers.get(0).getId());
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
         incomplete = collectorRepository.save(incomplete);
 
         // When & Then

@@ -197,6 +197,10 @@ public class AlbumServiceImpl implements AlbumService {
             throw new IllegalStateException("Cannot complete album - missing stickers");
         }
         
+        // Check if this collector has already completed this album
+        boolean alreadyCompletedByThisCollector = completedAlbumRepository.findAll().stream()
+                .anyMatch(ca -> ca.getCollector().getId().equals(collectorId) && ca.getAlbum().getId().equals(albumId));
+        
         // Count how many distinct collectors have completed this album before
         long previousCompletions = completedAlbumRepository.countDistinctCollectorsByAlbum(albumId);
         
@@ -210,8 +214,9 @@ public class AlbumServiceImpl implements AlbumService {
         }
         
         // Only award star if this collector is among the first 3 to complete this album
+        // AND they haven't completed it before
         boolean earnedStar = false;
-        if (previousCompletions < 3) {
+        if (previousCompletions < 3 && !alreadyCompletedByThisCollector) {
             collector.setStars(collector.getStars() != null ? collector.getStars() + 1 : 1);
             earnedStar = true;
         }

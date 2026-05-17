@@ -223,8 +223,9 @@ class RankingPaginationIntegrationTest {
         // Given - Create completions in current month
         LocalDateTime now = LocalDateTime.now();
         
-        Collector searchable = new Collector();
-        searchable.setUsername("MonthlyUser");
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername("MonthlyUser");
+        Collector searchable = collectorService.createCollector(request);
         searchable.setStars(0);
         searchable = collectorRepository.save(searchable);
 
@@ -255,8 +256,9 @@ class RankingPaginationIntegrationTest {
         LocalDateTime now = LocalDateTime.now();
         
         for (int i = 1; i <= 12; i++) {
-            Collector collector = new Collector();
-            collector.setUsername("YearlyCollector" + i);
+            CollectorRequest request = new CollectorRequest();
+            request.setUsername("YearlyCollector" + i);
+            Collector collector = collectorService.createCollector(request);
             collector.setStars(0);
             collector = collectorRepository.save(collector);
 

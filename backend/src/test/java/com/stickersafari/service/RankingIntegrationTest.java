@@ -296,10 +296,11 @@ class RankingIntegrationTest {
     @DisplayName("Should handle collector with zero stars in all-time ranking")
     void testCollectorWithZeroStars() {
         // Given
-        Collector zeroCollector = new Collector();
-        zeroCollector.setUsername("ZeroStarCollector");
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername("ZeroStarCollector");
+        Collector zeroCollector = collectorService.createCollector(request);
         zeroCollector.setStars(0);
-        collectorRepository.save(zeroCollector);
+        zeroCollector = collectorRepository.save(zeroCollector);
 
         // When
         List<RankingEntry> ranking = rankingService.getAllTimeRanking();
