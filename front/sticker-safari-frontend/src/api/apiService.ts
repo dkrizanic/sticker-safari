@@ -48,9 +48,15 @@ export interface AlbumCompletionResponse {
     missingStickerList: StickerResponse[];
 }
 
+export interface StickerWithQuantity {
+    sticker: StickerResponse;
+    quantity: number;
+}
+
 export interface CollectorResponse {
     id: number;
     username: string;
+    stickers?: StickerWithQuantity[];
 }
 
 export interface TradeOfferResponse {

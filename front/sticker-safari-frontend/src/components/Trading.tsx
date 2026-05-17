@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import apiService, { TradeOfferResponse, CollectorResponse, AlbumResponse } from '../api/apiService';
+import apiService, { TradeOfferResponse, CollectorResponse, StickerWithQuantity } from '../api/apiService';
 import { useUser } from '../context/UserContext';
 import { useToast } from '../context/ToastContext';
-import { Sticker } from '../types';
 
 const Trading = (): JSX.Element => {
     const { currentUser } = useUser();
@@ -16,8 +15,8 @@ const Trading = (): JSX.Element => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [collectors, setCollectors] = useState<CollectorResponse[]>([]);
     const [selectedReceiver, setSelectedReceiver] = useState<number | null>(null);
-    const [myAlbums, setMyAlbums] = useState<AlbumResponse[]>([]);
-    const [receiverAlbums, setReceiverAlbums] = useState<AlbumResponse[]>([]);
+    const [myStickers, setMyStickers] = useState<StickerWithQuantity[]>([]);
+    const [receiverStickers, setReceiverStickers] = useState<StickerWithQuantity[]>([]);
     const [selectedOfferedSticker, setSelectedOfferedSticker] = useState<number | null>(null);
     const [selectedRequestedSticker, setSelectedRequestedSticker] = useState<number | null>(null);
     const [tradeMessage, setTradeMessage] = useState('');
@@ -87,20 +86,14 @@ const Trading = (): JSX.Element => {
         setShowCreateModal(true);
         setLoading(true);
         try {
-            const [allCollectors, albums] = await Promise.all([
-                apiService.getAllCollectors(),
-                apiService.getAllAlbums()
-            ]);
+            const allCollectors = await apiService.getAllCollectors();
             // Filter out current user from collectors list
             setCollectors(allCollectors.filter(c => c.id !== currentUser?.id));
             
-            // Load current user's albums with their stickers
+            // Load current user's stickers with quantities
             if (currentUser?.id) {
-                // Get full albums with sticker details
-                const fullAlbums = await Promise.all(
-                    albums.map(album => apiService.getAlbum(album.id))
-                );
-                setMyAlbums(fullAlbums);
+                const userCollector = await apiService.getCollector(currentUser.id);
+                setMyStickers(userCollector.stickers || []);
             }
         } catch (error) {
             console.error('Failed to load trading data:', error);
@@ -113,19 +106,16 @@ const Trading = (): JSX.Element => {
     const handleReceiverChange = async (receiverId: number) => {
         setSelectedReceiver(receiverId);
         setSelectedRequestedSticker(null);
-        setReceiverAlbums([]);
+        setReceiverStickers([]);
         
         if (!receiverId) return;
         
         setLoading(true);
         try {
-            const albums = await apiService.getAllAlbums();
-            const receiverAlbums = await Promise.all(
-                albums.map(album => apiService.getAlbum(album.id))
-            );
-            setReceiverAlbums(receiverAlbums);
+            const receiverCollector = await apiService.getCollector(receiverId);
+            setReceiverStickers(receiverCollector.stickers || []);
         } catch (error) {
-            console.error('Failed to load receiver albums:', error);
+            console.error('Failed to load receiver stickers:', error);
             addToast('Failed to load receiver collection', 'error');
         } finally {
             setLoading(false);
@@ -165,7 +155,7 @@ const Trading = (): JSX.Element => {
         setSelectedOfferedSticker(null);
         setSelectedRequestedSticker(null);
         setTradeMessage('');
-        setReceiverAlbums([]);
+        setReceiverStickers([]);
     };
 
     if (!currentUser) {
@@ -378,14 +368,14 @@ const Trading = (): JSX.Element => {
                                         disabled={loading}
                                     >
                                         <option value="">Select a sticker you own...</option>
-                                        {myAlbums.map((album) =>
-                                            album.stickers
-                                                .map((sticker) => (
-                                                    <option key={sticker.id} value={sticker.id}>
-                                                        {album.name} - {sticker.name} ({sticker.latinName})
-                                                    </option>
-                                                ))
-                                        )}
+                                        {myStickers
+                                            .filter(sw => sw.quantity > 0)
+                                            .map((stickerWithQty) => (
+                                                <option key={stickerWithQty.sticker.id} value={stickerWithQty.sticker.id}>
+                                                    {stickerWithQty.sticker.name} ({stickerWithQty.sticker.latinName}) - Qty: {stickerWithQty.quantity}
+                                                </option>
+                                            ))
+                                        }
                                     </select>
                                 </div>
 
@@ -399,17 +389,17 @@ const Trading = (): JSX.Element => {
                                             value={selectedRequestedSticker || ''}
                                             onChange={(e) => setSelectedRequestedSticker(Number(e.target.value))}
                                             className="w-full border rounded-lg px-3 py-2"
-                                            disabled={loading || receiverAlbums.length === 0}
+                                            disabled={loading || receiverStickers.length === 0}
                                         >
                                             <option value="">Select a sticker they own...</option>
-                                            {receiverAlbums.map((album) =>
-                                                album.stickers
-                                                    .map((sticker) => (
-                                                        <option key={sticker.id} value={sticker.id}>
-                                                            {album.name} - {sticker.name} ({sticker.latinName})
-                                                        </option>
-                                                    ))
-                                            )}
+                                            {receiverStickers
+                                                .filter(sw => sw.quantity > 0)
+                                                .map((stickerWithQty) => (
+                                                    <option key={stickerWithQty.sticker.id} value={stickerWithQty.sticker.id}>
+                                                        {stickerWithQty.sticker.name} ({stickerWithQty.sticker.latinName}) - Qty: {stickerWithQty.quantity}
+                                                    </option>
+                                                ))
+                                            }
                                         </select>
                                     </div>
                                 )}
