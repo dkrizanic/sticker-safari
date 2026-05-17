@@ -2,6 +2,8 @@ package com.stickersafari.service;
 
 import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.entity.Collector;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -21,4 +23,8 @@ public interface CollectorService {
     Collector createCollector(CollectorRequest request);
     Collector updateCollector(Long collectorId, CollectorRequest request);
     void deleteCollector(Long collectorId);
+    
+    // Pagination and search
+    Page<Collector> getAllCollectorsWithPagination(Pageable pageable);
+    Page<Collector> searchCollectors(String search, Pageable pageable);
 }

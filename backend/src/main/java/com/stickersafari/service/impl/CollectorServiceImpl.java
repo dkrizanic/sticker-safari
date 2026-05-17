@@ -12,6 +12,8 @@ import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.StickerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -139,5 +141,22 @@ public class CollectorServiceImpl implements CollectorService {
         log.info("Deleting collector with ID: {}", collectorId);
         Collector collector = findById(collectorId);
         collectorRepository.delete(collector);
+    }
+
+    @Override
+    public Page<Collector> getAllCollectorsWithPagination(Pageable pageable) {
+        log.debug("Getting all collectors with pagination: page {}, size {}", 
+                  pageable.getPageNumber(), pageable.getPageSize());
+        return collectorRepository.findAll(pageable);
+    }
+
+    @Override
+    public Page<Collector> searchCollectors(String search, Pageable pageable) {
+        log.debug("Searching collectors with query '{}' with pagination: page {}, size {}", 
+                  search, pageable.getPageNumber(), pageable.getPageSize());
+        if (search == null || search.trim().isEmpty()) {
+            return getAllCollectorsWithPagination(pageable);
+        }
+        return collectorRepository.searchCollectors(search, pageable);
     }
 }

@@ -247,6 +247,30 @@ const apiService = {
         return response.data;
     },
 
+    getCollectorsPaginated: async (
+        page: number = 0,
+        size: number = 10,
+        sortBy: string = 'id',
+        sortDir: string = 'asc',
+        search?: string
+    ): Promise<{
+        collectors: CollectorResponse[];
+        currentPage: number;
+        totalItems: number;
+        totalPages: number;
+    }> => {
+        const params = new URLSearchParams();
+        params.append('page', page.toString());
+        params.append('size', size.toString());
+        params.append('sortBy', sortBy);
+        params.append('sortDir', sortDir);
+        if (search && search.trim()) {
+            params.append('search', search.trim());
+        }
+        const response = await api.get(`/collectors/admin/paginated?${params.toString()}`);
+        return response.data;
+    },
+
     updateCollector: async (id: number, username: string): Promise<CollectorResponse> => {
         const response = await api.put(`/collectors/${id}`, { username });
         return response.data;

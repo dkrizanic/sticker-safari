@@ -17,20 +17,66 @@ const CollectorManagement: React.FC = () => {
   const [formData, setFormData] = useState({ username: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  const [sortBy, setSortBy] = useState('id');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+
   useEffect(() => {
     loadCollectors();
-  }, []);
+  }, [currentPage, pageSize, sortBy, sortDir, searchQuery]);
 
   const loadCollectors = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getAllCollectors();
-      setCollectors(data);
+      const data = await apiService.getCollectorsPaginated(
+        currentPage,
+        pageSize,
+        sortBy,
+        sortDir,
+        searchQuery
+      );
+      setCollectors(data.collectors);
+      setTotalPages(data.totalPages);
+      setTotalItems(data.totalItems);
     } catch (error) {
       addToast('Failed to load collectors', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    setSearchQuery(searchInput);
+    setCurrentPage(0);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearchQuery('');
+    setCurrentPage(0);
+  };
+
+  const handleSortChange = (field: string) => {
+    if (sortBy === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortDir('asc');
+    }
+    setCurrentPage(0);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(0);
   };
 
   const handleEdit = (collector: CollectorResponse) => {
@@ -110,13 +156,137 @@ const CollectorManagement: React.FC = () => {
           </div>
         </div>
 
+        {/* Search and Sort Controls */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Search Bar */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search by Username
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="Search collectors by username..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  onClick={handleSearch}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Search
+                </button>
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Sort Controls */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sort by
+              </label>
+              <div className="flex gap-2">
+                {['id', 'username'].map(field => (
+                  <button
+                    key={field}
+                    onClick={() => handleSortChange(field)}
+                    className={`px-4 py-2 rounded-lg text-sm ${
+                      sortBy === field
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {field === 'id' ? 'ID' : 'Username'}
+                    {sortBy === field && (
+                      <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Info */}
+        <div className="mb-4 text-gray-600">
+          {searchQuery && (
+            <span className="mr-4">
+              Search results for: <strong>"{searchQuery}"</strong>
+            </span>
+          )}
+          Showing {collectors.length} of {totalItems} collectors
+        </div>
+
         <AdminTable
           columns={columns}
           data={collectors}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          emptyMessage="No collectors found."
+          emptyMessage="No collectors found. Try adjusting your search."
         />
+
+        {/* Pagination Controls */}
+        {totalPages > 0 && (
+          <div className="mt-6 flex items-center justify-between bg-white rounded-lg shadow-md p-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-700">Items per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(0)}
+                disabled={currentPage === 0}
+                className="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                First
+              </button>
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 0}
+                className="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-1 text-gray-700">
+                Page {currentPage + 1} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => setCurrentPage(totalPages - 1)}
+                disabled={currentPage >= totalPages - 1}
+                className="px-3 py-1 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Edit Modal */}
         <FormModal

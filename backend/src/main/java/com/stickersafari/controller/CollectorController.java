@@ -8,6 +8,10 @@ import com.stickersafari.mapper.CollectorMapper;
 import com.stickersafari.service.CollectorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -15,7 +19,9 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -94,6 +100,40 @@ public class CollectorController {
         
         collectorService.deleteCollector(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/admin/paginated")
+    public ResponseEntity<Map<String, Object>> getCollectorsPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String search) {
+        
+        log.debug("Admin: Getting paginated collectors - page: {}, size: {}, sortBy: {}, sortDir: {}, search: {}", 
+                  page, size, sortBy, sortDir, search);
+        
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        Page<Collector> collectorPage;
+        if (search != null && !search.trim().isEmpty()) {
+            collectorPage = collectorService.searchCollectors(search, pageable);
+        } else {
+            collectorPage = collectorService.getAllCollectorsWithPagination(pageable);
+        }
+        
+        List<CollectorResponse> collectors = collectorPage.getContent().stream()
+                .map(collectorMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("collectors", collectors);
+        response.put("currentPage", collectorPage.getNumber());
+        response.put("totalItems", collectorPage.getTotalElements());
+        response.put("totalPages", collectorPage.getTotalPages());
+        
+        return ResponseEntity.ok(response);
     }
     
     private boolean isAuthorizedToModify(Long collectorId, Authentication authentication) {
