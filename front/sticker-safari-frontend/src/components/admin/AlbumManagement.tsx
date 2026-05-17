@@ -88,6 +88,12 @@ const AlbumManagement: React.FC = () => {
       return;
     }
 
+    // Validate: cannot publish album without stickers
+    if (formData.status === AlbumStatus.PUBLISHED && selectedStickerIds.length === 0) {
+      addToast('Cannot publish album without stickers', 'error');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await apiService.updateAlbum(
@@ -249,25 +255,27 @@ const AlbumManagement: React.FC = () => {
             {/* Current Stickers */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Current Stickers ({selectedAlbum?.stickers.length || 0})
+                Current Stickers ({selectedStickerIds.length})
               </label>
               <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-gray-50">
-                {selectedAlbum?.stickers && selectedAlbum.stickers.length > 0 ? (
+                {selectedAlbum?.stickers && selectedAlbum.stickers.filter(s => selectedStickerIds.includes(s.id)).length > 0 ? (
                   <div className="space-y-2">
-                    {selectedAlbum.stickers.map(sticker => (
-                      <div key={sticker.id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm">
-                        <span className="text-sm">
-                          <span className="font-semibold">#{sticker.id}</span> - {sticker.name}
-                        </span>
-                        <button
-                          onClick={() => setSelectedStickerIds(prev => prev.filter(id => id !== sticker.id))}
-                          className="text-red-600 hover:text-red-800 text-sm font-medium"
-                          type="button"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
+                    {selectedAlbum.stickers
+                      .filter(s => selectedStickerIds.includes(s.id))
+                      .map(sticker => (
+                        <div key={sticker.id} className="flex items-center justify-between bg-white p-2 rounded shadow-sm">
+                          <span className="text-sm">
+                            <span className="font-semibold">#{sticker.id}</span> - {sticker.name}
+                          </span>
+                          <button
+                            onClick={() => setSelectedStickerIds(prev => prev.filter(id => id !== sticker.id))}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            type="button"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
                   </div>
                 ) : (
                   <p className="text-gray-500 text-sm text-center py-4">No stickers in this album</p>

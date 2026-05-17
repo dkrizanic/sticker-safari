@@ -154,6 +154,10 @@ public class AlbumServiceImpl implements AlbumService {
         
         // Update status: manual override takes priority, otherwise auto-determine
         if (request.getStatus() != null) {
+            // Validate: cannot publish album without stickers
+            if (request.getStatus() == AlbumStatus.PUBLISHED && album.getStickers().isEmpty()) {
+                throw new IllegalArgumentException("Cannot publish album without stickers");
+            }
             album.setStatus(request.getStatus());
             log.info("Album status manually set to: {}", request.getStatus());
         } else if (request.getStickerIds() != null) {
