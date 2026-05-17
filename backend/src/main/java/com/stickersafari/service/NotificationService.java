@@ -12,4 +12,8 @@ public interface NotificationService {
     Notification saveNotification(Notification notification);
     
     void markAsRead(Long notificationId);
+    
+    void deleteNotification(Long notificationId);
+    
+    boolean notificationExists(Long collectorId, String message);
 }

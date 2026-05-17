@@ -154,9 +154,17 @@ public class StickerServiceImpl implements StickerService {
         for (Long albumId : albumIds) {
             if (albumService.canCompleteAlbum(albumId, collector.getId())) {
                 Album album = albumService.getAlbum(albumId);
+                String message = String.format("Great news! You have collected all stickers for album '%s'. You can now complete it to earn a star! ⭐", album.getName());
+                
+                // Check if this notification already exists and is unread
+                if (notificationService.notificationExists(collector.getId(), message)) {
+                    log.debug("Notification already exists for collector {} and album {}, skipping", collector.getId(), albumId);
+                    continue;
+                }
+                
                 Notification notification = new Notification();
                 notification.setRecipient(collector);
-                notification.setMessage(String.format("Great news! You have collected all stickers for album '%s'. You can now complete it to earn a star! ⭐", album.getName()));
+                notification.setMessage(message);
                 notification.setCreatedAt(LocalDateTime.now());
                 notification.setRead(false);
                 notificationService.saveNotification(notification);

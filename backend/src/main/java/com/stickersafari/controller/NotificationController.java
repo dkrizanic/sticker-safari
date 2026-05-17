@@ -30,6 +30,12 @@ public class NotificationController {
         log.debug("Marking notification {} as read", notificationId);
         notificationService.markAsRead(notificationId);
     }
+    
+    @DeleteMapping("/{notificationId}")
+    public void deleteNotification(@PathVariable("notificationId") Long notificationId) {
+        log.debug("Deleting notification {}", notificationId);
+        notificationService.deleteNotification(notificationId);
+    }
 
     private List<Notification> sortNotifications(List<Notification> notifications) {
         for (int i = 0; i < notifications.size()-1; i++)

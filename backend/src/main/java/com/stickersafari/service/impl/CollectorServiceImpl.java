@@ -99,7 +99,12 @@ public class CollectorServiceImpl implements CollectorService {
     @Override
     public List<Collector> getAllCollectors() {
         log.debug("Getting all collectors");
-        return collectorRepository.findAll();
+        return collectorRepository.findAll().stream()
+                .filter(collector -> collector.getOwnedStickers() != null && 
+                        !collector.getOwnedStickers().isEmpty() &&
+                        collector.getOwnedStickers().values().stream()
+                                .anyMatch(quantity -> quantity > 0))
+                .toList();
     }
 
     @Override

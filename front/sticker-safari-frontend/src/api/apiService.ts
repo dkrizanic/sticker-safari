@@ -181,6 +181,10 @@ const apiService = {
     markNotificationAsRead: async (notificationId: number): Promise<void> => {
         await api.put(`/notifications/${notificationId}/read`);
     },
+    
+    deleteNotification: async (notificationId: number): Promise<void> => {
+        await api.delete(`/notifications/${notificationId}`);
+    },
 
     // Admin - Album Management
     createAlbum: async (name: string): Promise<AlbumResponse> => {

@@ -295,60 +295,72 @@ const Trading = (): JSX.Element => {
                             {receivedOffers.length === 0 ? (
                                 <p className="text-gray-500 text-center py-8">No received trade offers</p>
                             ) : (
-                                <div className="grid gap-4">
+                                <div className="flex flex-col items-center gap-4">
                                     {receivedOffers.map((offer, index) => (
                                         <div
                                             key={index}
-                                            className="bg-white border rounded-lg shadow p-6"
+                                            className="bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200 rounded-xl shadow-md hover:shadow-lg transition-all p-4 w-full max-w-3xl"
                                         >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <p className="font-semibold text-lg mb-2">
-                                                        From: {offer.sender.username}
-                                                    </p>
-                                                    <div className="flex items-center gap-4 mb-2">
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">They offer:</p>
-                                                            <p className="font-medium">{offer.offeredSticker.name}</p>
-                                                            <p className="text-sm italic">{offer.offeredSticker.latinName}</p>
+                                            <div className="flex justify-between items-center gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <span className="text-lg">👤</span>
+                                                        <span className="font-bold text-slate-800">From: {offer.sender.username}</span>
+                                                        <span className={`ml-auto text-xs px-2 py-1 rounded-full font-semibold ${
+                                                            offer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                            offer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                                                            'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                            {offer.status}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-green-50 border border-green-200 rounded-lg p-2 flex-1">
+                                                            <p className="text-xs text-green-600 font-semibold mb-0.5">They offer:</p>
+                                                            <p className="font-bold text-sm text-slate-800 truncate">{offer.offeredSticker.name}</p>
+                                                            <p className="text-xs text-slate-500 italic truncate">{offer.offeredSticker.latinName}</p>
                                                             {offer.sender.stickers && (
-                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                <p className="text-xs text-green-600 mt-0.5">
                                                                     (they have: {offer.sender.stickers.find(s => s.sticker.id === offer.offeredSticker.id)?.quantity || 0})
                                                                 </p>
                                                             )}
                                                         </div>
-                                                        <span className="text-2xl">⇄</span>
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">For your:</p>
-                                                            <p className="font-medium">{offer.receivedSticker.name}</p>
-                                                            <p className="text-sm italic">{offer.receivedSticker.latinName}</p>
+                                                        
+                                                        <div className="flex-shrink-0">
+                                                            <span className="text-2xl">⇄</span>
+                                                        </div>
+                                                        
+                                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex-1">
+                                                            <p className="text-xs text-blue-600 font-semibold mb-0.5">For your:</p>
+                                                            <p className="font-bold text-sm text-slate-800 truncate">{offer.receivedSticker.name}</p>
+                                                            <p className="text-xs text-slate-500 italic truncate">{offer.receivedSticker.latinName}</p>
                                                             {offer.receiver.stickers && (
-                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                <p className="text-xs text-blue-600 mt-0.5">
                                                                     (you have: {offer.receiver.stickers.find(s => s.sticker.id === offer.receivedSticker.id)?.quantity || 0})
                                                                 </p>
                                                             )}
                                                         </div>
                                                     </div>
+                                                    
                                                     {offer.message && (
-                                                        <p className="text-sm text-gray-600 italic mt-2">
-                                                            Message: {offer.message}
-                                                        </p>
+                                                        <div className="mt-2 text-xs text-slate-600 italic bg-slate-100 rounded px-2 py-1">
+                                                            💬 {offer.message}
+                                                        </div>
                                                     )}
-                                                    <p className="text-sm text-gray-500 mt-2">
-                                                        Status: <span className="font-semibold">{offer.status}</span>
-                                                    </p>
                                                 </div>
+                                                
                                                 {offer.status === 'PENDING' && (
-                                                    <div className="flex gap-2">
+                                                    <div className="flex gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() => handleAcceptOffer(offer)}
-                                                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                                            className="px-4 py-2 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition-colors shadow-md"
                                                         >
                                                             Accept
                                                         </button>
                                                         <button
                                                             onClick={() => handleRefuseOffer(offer)}
-                                                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                                            className="px-4 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-colors shadow-md"
                                                         >
                                                             Refuse
                                                         </button>
@@ -368,54 +380,66 @@ const Trading = (): JSX.Element => {
                             {sentOffers.length === 0 ? (
                                 <p className="text-gray-500 text-center py-8">No sent trade offers</p>
                             ) : (
-                                <div className="grid gap-4">
+                                <div className="flex flex-col items-center gap-4">
                                     {sentOffers.map((offer, index) => (
                                         <div
                                             key={index}
-                                            className="bg-white border rounded-lg shadow p-6"
+                                            className="bg-gradient-to-br from-white to-slate-50 border-2 border-slate-200 rounded-xl shadow-md hover:shadow-lg transition-all p-4 w-full max-w-3xl"
                                         >
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex-1">
-                                                    <p className="font-semibold text-lg mb-2">
-                                                        To: {offer.receiver.username}
-                                                    </p>
-                                                    <div className="flex items-center gap-4 mb-2">
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">You offered:</p>
-                                                            <p className="font-medium">{offer.offeredSticker.name}</p>
-                                                            <p className="text-sm italic">{offer.offeredSticker.latinName}</p>
+                                            <div className="flex justify-between items-center gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-3">
+                                                        <span className="text-lg">👤</span>
+                                                        <span className="font-bold text-slate-800">To: {offer.receiver.username}</span>
+                                                        <span className={`ml-auto text-xs px-2 py-1 rounded-full font-semibold ${
+                                                            offer.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                            offer.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
+                                                            'bg-gray-100 text-gray-700'
+                                                        }`}>
+                                                            {offer.status}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 flex-1">
+                                                            <p className="text-xs text-blue-600 font-semibold mb-0.5">You offered:</p>
+                                                            <p className="font-bold text-sm text-slate-800 truncate">{offer.offeredSticker.name}</p>
+                                                            <p className="text-xs text-slate-500 italic truncate">{offer.offeredSticker.latinName}</p>
                                                             {offer.sender.stickers && (
-                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                <p className="text-xs text-blue-600 mt-0.5">
                                                                     (you have: {offer.sender.stickers.find(s => s.sticker.id === offer.offeredSticker.id)?.quantity || 0})
                                                                 </p>
                                                             )}
                                                         </div>
-                                                        <span className="text-2xl">⇄</span>
-                                                        <div>
-                                                            <p className="text-sm text-gray-600">For their:</p>
-                                                            <p className="font-medium">{offer.receivedSticker.name}</p>
-                                                            <p className="text-sm italic">{offer.receivedSticker.latinName}</p>
+                                                        
+                                                        <div className="flex-shrink-0">
+                                                            <span className="text-2xl">⇄</span>
+                                                        </div>
+                                                        
+                                                        <div className="bg-green-50 border border-green-200 rounded-lg p-2 flex-1">
+                                                            <p className="text-xs text-green-600 font-semibold mb-0.5">For their:</p>
+                                                            <p className="font-bold text-sm text-slate-800 truncate">{offer.receivedSticker.name}</p>
+                                                            <p className="text-xs text-slate-500 italic truncate">{offer.receivedSticker.latinName}</p>
                                                             {offer.receiver.stickers && (
-                                                                <p className="text-xs text-gray-500 mt-1">
+                                                                <p className="text-xs text-green-600 mt-0.5">
                                                                     (they have: {offer.receiver.stickers.find(s => s.sticker.id === offer.receivedSticker.id)?.quantity || 0})
                                                                 </p>
                                                             )}
                                                         </div>
                                                     </div>
+                                                    
                                                     {offer.message && (
-                                                        <p className="text-sm text-gray-600 italic mt-2">
-                                                            Message: {offer.message}
-                                                        </p>
+                                                        <div className="mt-2 text-xs text-slate-600 italic bg-slate-100 rounded px-2 py-1">
+                                                            💬 {offer.message}
+                                                        </div>
                                                     )}
-                                                    <p className="text-sm text-gray-500 mt-2">
-                                                        Status: <span className="font-semibold">{offer.status}</span>
-                                                    </p>
                                                 </div>
+                                                
                                                 {offer.status === 'PENDING' && (
-                                                    <div className="flex gap-2">
+                                                    <div className="flex gap-2 flex-shrink-0">
                                                         <button
                                                             onClick={() => handleCancelOffer(offer)}
-                                                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                                            className="px-4 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition-colors shadow-md"
                                                         >
                                                             Cancel
                                                         </button>

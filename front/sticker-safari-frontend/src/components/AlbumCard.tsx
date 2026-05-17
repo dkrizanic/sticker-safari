@@ -44,6 +44,11 @@ function AlbumCard({ album, ownedStickers, onAlbumCompleted }: AlbumCardProps): 
     const handleCompleteAlbum = async (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent card collapse
         
+        // Immediate check to prevent double-clicks
+        if (isCompleting) {
+            return;
+        }
+        
         if (!currentUser?.id) {
             addToast('Please log in to complete albums', 'error');
             return;
@@ -55,6 +60,7 @@ function AlbumCard({ album, ownedStickers, onAlbumCompleted }: AlbumCardProps): 
         }
 
         setIsCompleting(true);
+        setCanComplete(false); // Immediately disable to prevent race condition
         try {
             await apiService.completeAlbum(album.id, currentUser.id);
             addToast(`Congratulations! You completed "${album.name}" and earned a star! ⭐`, 'success');
@@ -71,39 +77,80 @@ function AlbumCard({ album, ownedStickers, onAlbumCompleted }: AlbumCardProps): 
                 error.response?.data?.message || 'Failed to complete album',
                 'error'
             );
-        } finally {
+            // Re-enable if there was an error
             setIsCompleting(false);
+            setCanComplete(true);
         }
     };
     
     return (
-        <div className="py-2">
+        <div className="py-3">
             <div
-                className="flex flex-row justify-between items-center block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 cursor-pointer"
+                className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 border-2 border-slate-200 dark:border-gray-700 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
                 onClick={handleArrowClick}>
-                <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-1">{album.name}</h3>
-                    <div className="flex items-center gap-2">
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                            {completion.toFixed(1)}% complete
+                {/* Decorative background pattern */}
+                <div className="absolute inset-0 opacity-5">
+                    <div className="absolute inset-0" style={{
+                        backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)',
+                        backgroundSize: '20px 20px'
+                    }}></div>
+                </div>
+                
+                <div className="relative p-6">
+                    <div className="flex flex-row justify-between items-center">
+                        <div className="flex-1">
+                            <h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-slate-700 to-slate-900 dark:from-slate-200 dark:to-white bg-clip-text text-transparent">
+                                {album.name}
+                            </h3>
+                            
+                            {/* Progress Bar */}
+                            <div className="mb-2">
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                                        {completion.toFixed(1)}% complete
+                                    </span>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                        {album.stickers.filter(s => ownedStickers.includes(s.id)).length} / {album.stickers.length} stickers
+                                    </span>
+                                </div>
+                                <div className="w-full h-3 bg-slate-200 dark:bg-gray-700 rounded-full overflow-hidden shadow-inner">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 dark:from-blue-500 dark:via-blue-600 dark:to-blue-700 transition-all duration-500 ease-out rounded-full shadow-md"
+                                        style={{ width: `${completion}%` }}
+                                    >
+                                        {completion > 10 && (
+                                            <div className="h-full flex items-center justify-end pr-2">
+                                                <span className="text-xs font-bold text-white drop-shadow">★</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {canComplete && (
+                                <button
+                                    onClick={handleCompleteAlbum}
+                                    disabled={isCompleting}
+                                    className={`mt-3 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-green-700 disabled:from-gray-400 disabled:to-gray-500 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 ${
+                                        isCompleting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                                    }`}
+                                >
+                                    {isCompleting ? '⏳ Completing...' : '✓ Complete Album & Earn Star'}
+                                </button>
+                            )}
                         </div>
-                        {canComplete && (
-                            <button
-                                onClick={handleCompleteAlbum}
-                                disabled={isCompleting}
-                                className="ml-2 px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 disabled:bg-gray-400 transition-colors"
-                            >
-                                {isCompleting ? 'Completing...' : '✓ Complete Album'}
-                            </button>
-                        )}
+                        <div className="ml-4">
+                            {isHidden ?
+                                <ArrowDown className='w-6 h-6 text-slate-600 dark:text-slate-300 transition-transform duration-200'/> :
+                                <ArrowUp className='w-6 h-6 text-slate-600 dark:text-slate-300 transition-transform duration-200'/>}
+                        </div>
                     </div>
                 </div>
-                {isHidden ?
-                    <ArrowDown className='w-5 h-5 ml-2'/> :
-                    <ArrowUp className='w-5 h-5 ml-2'/>}
             </div>
             {!isHidden && (
-                <AlbumStickers albumStickers = {album.stickers} ownedStickers={ownedStickers}/>
+                <div className="mt-4 p-4 bg-gradient-to-b from-slate-50 to-white dark:from-gray-900 dark:to-gray-800 rounded-xl border-2 border-slate-200 dark:border-gray-700 shadow-inner">
+                    <AlbumStickers albumStickers = {album.stickers} ownedStickers={ownedStickers}/>
+                </div>
             )}
         </div>
     )

@@ -15,12 +15,13 @@ const NotificationCenter: React.FC = () => {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [deletingIds, setDeletingIds] = useState<Set<number>>(new Set());
 
     useEffect(() => {
-        if (currentUser?.id) {
+        if (currentUser?.id && isOpen) {
             fetchNotifications();
         }
-    }, [currentUser]);
+    }, [currentUser, isOpen]);
 
     const fetchNotifications = async () => {
         if (!currentUser?.id) return;
@@ -176,11 +177,44 @@ const NotificationCenter: React.FC = () => {
                                                     </p>
                                                 </div>
                                                 <button
-                                                    onClick={(e) => {
+                                                    onClick={async (e) => {
                                                         e.stopPropagation();
-                                                        setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                                        
+                                                        // Prevent multiple deletes of the same notification
+                                                        if (deletingIds.has(notification.id)) {
+                                                            return;
+                                                        }
+                                                        
+                                                        // Mark as deleting
+                                                        setDeletingIds(prev => new Set([...prev, notification.id]));
+                                                        
+                                                        try {
+                                                            await apiService.deleteNotification(notification.id);
+                                                            
+                                                            // Update notifications state
+                                                            setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                                                            
+                                                            // Update unread count if needed
+                                                            if (!notification.read) {
+                                                                setUnreadCount(prev => Math.max(0, prev - 1));
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Failed to delete notification:', error);
+                                                        } finally {
+                                                            // Remove from deleting set
+                                                            setDeletingIds(prev => {
+                                                                const newSet = new Set(prev);
+                                                                newSet.delete(notification.id);
+                                                                return newSet;
+                                                            });
+                                                        }
                                                     }}
-                                                    className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                                                    disabled={deletingIds.has(notification.id)}
+                                                    className={`flex-shrink-0 transition-colors ${
+                                                        deletingIds.has(notification.id) 
+                                                            ? 'text-gray-300 cursor-not-allowed' 
+                                                            : 'text-gray-400 hover:text-gray-600 cursor-pointer'
+                                                    }`}
                                                     title="Remove notification"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
