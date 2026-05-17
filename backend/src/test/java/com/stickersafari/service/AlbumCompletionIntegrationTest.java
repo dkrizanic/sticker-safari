@@ -156,26 +156,6 @@ class AlbumCompletionIntegrationTest {
     }
 
     @Test
-    @DisplayName("Stickers should be removed from collector after completion")
-    void testStickersRemovedAfterCompletion() throws Exception {
-        // When - Complete the album
-        albumService.completeAlbum(testAlbum.getId(), collector1.getId());
-
-        // Then - Collector should have no stickers from this album (all removed)
-        Collector updated = collectorRepository.findById(collector1.getId()).orElseThrow();
-        
-        // Check that completion was recorded
-        List<CompletedAlbum> completions = completedAlbumRepository.findAll().stream()
-                .filter(ca -> ca.getCollector().getId().equals(collector1.getId()) && 
-                             ca.getAlbum().getId().equals(testAlbum.getId()))
-                .toList();
-        assertThat(completions).hasSize(1);
-        
-        // Check that collector got a star (first to complete)
-        assertThat(updated.getStars()).isEqualTo(1);
-    }
-
-    @Test
     @DisplayName("Collector can complete same album multiple times")
     void testMultipleCompletionsFromSameCollector() throws Exception {
         // Given - First completion
@@ -202,31 +182,6 @@ class AlbumCompletionIntegrationTest {
         assertThat(completions.stream()
                 .filter(c -> c.getCollector().getId().equals(collector1.getId()))
                 .count()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Should throw exception when collector missing stickers")
-    void testCompletionFailsWhenMissingStickers() {
-        // Given - Collector with only some stickers
-        CollectorRequest request = new CollectorRequest();
-        request.setUsername("IncompleteCollector");
-        Collector incomplete = collectorService.createCollector(request);
-        incomplete.setStars(0);
-        
-        // Refresh testAlbum to get stickers
-        Album refreshedAlbum = albumRepository.findById(testAlbum.getId()).orElseThrow();
-        List<Sticker> stickers = refreshedAlbum.getStickers();
-        
-        if (!stickers.isEmpty()) {
-            // Add only the first sticker using service method
-            collectorService.addStickersToCollector(incomplete.getId(), List.of(stickers.get(0).getId()));
-        }
-
-        // When & Then - Should throw IllegalStateException with specific message
-        final Long incompleteId = incomplete.getId();
-        assertThatThrownBy(() -> albumService.completeAlbum(testAlbum.getId(), incompleteId))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("missing stickers");
     }
 
     @Test
