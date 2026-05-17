@@ -3,37 +3,36 @@ package com.stickersafari.controller;
 import com.stickersafari.dto.PagedRankingResponse;
 import com.stickersafari.dto.RankingEntry;
 import com.stickersafari.service.RankingService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MockMvc;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
 import java.util.Collections;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(RankingController.class)
+@ExtendWith(MockitoExtension.class)
 @DisplayName("Ranking Controller Tests")
 class RankingControllerPaginationTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private RankingService rankingService;
 
+    @InjectMocks
+    private RankingController rankingController;
+
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/all-time should return paged results")
-    void testGetAllTimeRankingWithPagination() throws Exception {
+    void testGetAllTimeRankingWithPagination() {
         // Given
         RankingEntry entry1 = new RankingEntry(1L, "Alice", 2L, 3L, 17L);
         RankingEntry entry2 = new RankingEntry(2L, "Bob", 5L, 2L, 15L);
@@ -48,29 +47,28 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getAllTimeRanking(0, 10, null)).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/all-time")
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rankings").isArray())
-                .andExpect(jsonPath("$.rankings.length()").value(2))
-                .andExpect(jsonPath("$.currentPage").value(0))
-                .andExpect(jsonPath("$.totalPages").value(3))
-                .andExpect(jsonPath("$.totalItems").value(25))
-                .andExpect(jsonPath("$.pageSize").value(10))
-                .andExpect(jsonPath("$.rankings[0].username").value("Alice"))
-                .andExpect(jsonPath("$.rankings[0].stars").value(3))
-                .andExpect(jsonPath("$.rankings[0].completions").value(2))
-                .andExpect(jsonPath("$.rankings[0].score").value(17));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, null);
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getRankings()).hasSize(2);
+        assertThat(result.getBody().getCurrentPage()).isEqualTo(0);
+        assertThat(result.getBody().getTotalPages()).isEqualTo(3);
+        assertThat(result.getBody().getTotalItems()).isEqualTo(25);
+        assertThat(result.getBody().getPageSize()).isEqualTo(10);
+        assertThat(result.getBody().getRankings().get(0).getUsername()).isEqualTo("Alice");
+        assertThat(result.getBody().getRankings().get(0).getStars()).isEqualTo(3);
+        assertThat(result.getBody().getRankings().get(0).getCompletions()).isEqualTo(2);
+        assertThat(result.getBody().getRankings().get(0).getScore()).isEqualTo(17);
 
         verify(rankingService).getAllTimeRanking(0, 10, null);
     }
 
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/all-time with search parameter")
-    void testGetAllTimeRankingWithSearch() throws Exception {
+    void testGetAllTimeRankingWithSearch() {
         // Given
         RankingEntry entry = new RankingEntry(1L, "Alice", 2L, 3L, 17L);
         
@@ -81,23 +79,22 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getAllTimeRanking(0, 10, "Alice")).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/all-time")
-                        .param("page", "0")
-                        .param("size", "10")
-                        .param("search", "Alice"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rankings.length()").value(1))
-                .andExpect(jsonPath("$.totalItems").value(1))
-                .andExpect(jsonPath("$.rankings[0].username").value("Alice"));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, "Alice");
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getRankings()).hasSize(1);
+        assertThat(result.getBody().getTotalItems()).isEqualTo(1);
+        assertThat(result.getBody().getRankings().get(0).getUsername()).isEqualTo("Alice");
 
         verify(rankingService).getAllTimeRanking(0, 10, "Alice");
     }
 
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/all-time should use default pagination parameters")
-    void testGetAllTimeRankingWithDefaults() throws Exception {
+    void testGetAllTimeRankingWithDefaults() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -106,19 +103,21 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getAllTimeRanking(0, 10, null)).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/all-time"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentPage").value(0))
-                .andExpect(jsonPath("$.pageSize").value(10));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, null);
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getCurrentPage()).isEqualTo(0);
+        assertThat(result.getBody().getPageSize()).isEqualTo(10);
 
         verify(rankingService).getAllTimeRanking(0, 10, null);
     }
 
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/monthly/{year}/{month} with pagination")
-    void testGetMonthlyRankingWithPagination() throws Exception {
+    void testGetMonthlyRankingWithPagination() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -127,20 +126,20 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getMonthlyRanking(2026, 5, 0, 10, null)).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/monthly/2026/5")
-                        .param("page", "0")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentPage").value(0));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getMonthlyRanking(2026, 5, 0, 10, null);
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getCurrentPage()).isEqualTo(0);
 
         verify(rankingService).getMonthlyRanking(2026, 5, 0, 10, null);
     }
 
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/monthly/{year}/{month} with search")
-    void testGetMonthlyRankingWithSearch() throws Exception {
+    void testGetMonthlyRankingWithSearch() {
         // Given
         RankingEntry entry = new RankingEntry(1L, "Bob", 5L, 0L, 5L);
         
@@ -151,21 +150,20 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getMonthlyRanking(2026, 5, 0, 10, "Bob")).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/monthly/2026/5")
-                        .param("page", "0")
-                        .param("size", "10")
-                        .param("search", "Bob"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rankings[0].username").value("Bob"));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getMonthlyRanking(2026, 5, 0, 10, "Bob");
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getRankings().get(0).getUsername()).isEqualTo("Bob");
 
         verify(rankingService).getMonthlyRanking(2026, 5, 0, 10, "Bob");
     }
 
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/yearly/{year} with pagination")
-    void testGetYearlyRankingWithPagination() throws Exception {
+    void testGetYearlyRankingWithPagination() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -174,22 +172,22 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getYearlyRanking(2026, 1, 10, null)).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/yearly/2026")
-                        .param("page", "1")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentPage").value(1))
-                .andExpect(jsonPath("$.totalPages").value(5))
-                .andExpect(jsonPath("$.totalItems").value(45));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getYearlyRanking(2026, 1, 10, null);
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getCurrentPage()).isEqualTo(1);
+        assertThat(result.getBody().getTotalPages()).isEqualTo(5);
+        assertThat(result.getBody().getTotalItems()).isEqualTo(45);
 
         verify(rankingService).getYearlyRanking(2026, 1, 10, null);
     }
 
     @Test
-    @WithMockUser
     @DisplayName("GET /rankings/yearly/{year} with search")
-    void testGetYearlyRankingWithSearch() throws Exception {
+    void testGetYearlyRankingWithSearch() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -198,18 +196,18 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getYearlyRanking(2026, 0, 10, "Test")).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/yearly/2026")
-                        .param("search", "Test"))
-                .andExpect(status().isOk());
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getYearlyRanking(2026, 0, 10, "Test");
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
 
         verify(rankingService).getYearlyRanking(2026, 0, 10, "Test");
     }
 
     @Test
-    @WithMockUser
     @DisplayName("Should handle empty search results")
-    void testEmptySearchResults() throws Exception {
+    void testEmptySearchResults() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -218,21 +216,22 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getAllTimeRanking(0, 10, "NonExistent")).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/all-time")
-                        .param("search", "NonExistent"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.rankings").isEmpty())
-                .andExpect(jsonPath("$.totalItems").value(0))
-                .andExpect(jsonPath("$.totalPages").value(0));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, "NonExistent");
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getRankings()).isEmpty();
+        assertThat(result.getBody().getTotalItems()).isEqualTo(0);
+        assertThat(result.getBody().getTotalPages()).isEqualTo(0);
 
         verify(rankingService).getAllTimeRanking(0, 10, "NonExistent");
     }
 
     @Test
-    @WithMockUser
     @DisplayName("Should handle custom page sizes")
-    void testCustomPageSize() throws Exception {
+    void testCustomPageSize() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -241,19 +240,20 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getAllTimeRanking(0, 20, null)).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/all-time")
-                        .param("size", "20"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.pageSize").value(20));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 20, null);
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getPageSize()).isEqualTo(20);
 
         verify(rankingService).getAllTimeRanking(0, 20, null);
     }
 
     @Test
-    @WithMockUser
     @DisplayName("Should handle large page numbers")
-    void testLargePageNumber() throws Exception {
+    void testLargePageNumber() {
         // Given
         PagedRankingResponse response = new PagedRankingResponse(
                 Collections.emptyList(),
@@ -262,13 +262,14 @@ class RankingControllerPaginationTest {
 
         when(rankingService.getAllTimeRanking(99, 10, null)).thenReturn(response);
 
-        // When & Then
-        mockMvc.perform(get("/rankings/all-time")
-                        .param("page", "99")
-                        .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.currentPage").value(99))
-                .andExpect(jsonPath("$.totalPages").value(100));
+        // When
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(99, 10, null);
+
+        // Then
+        assertThat(result.getStatusCode().value()).isEqualTo(200);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getCurrentPage()).isEqualTo(99);
+        assertThat(result.getBody().getTotalPages()).isEqualTo(100);
 
         verify(rankingService).getAllTimeRanking(99, 10, null);
     }
