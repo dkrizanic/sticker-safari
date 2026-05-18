@@ -26,7 +26,6 @@ const Login = (): JSX.Element => {
         setError('');
         try {
             // Demo: Use a single login endpoint (simulate)
-            // Replace this with your real API call if available
             if (username === 'admin' && password === 'admin') {
                 login({ username, role: 'ADMIN' });
                 navigate('/admin');
