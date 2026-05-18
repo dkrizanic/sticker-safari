@@ -18,62 +18,31 @@ const Login = (): JSX.Element => {
             setError('Please enter a username');
             return;
         }
-
         if (!password.trim()) {
             setError('Please enter a password');
             return;
         }
-
         setLoading(true);
         setError('');
-
-        // Store credentials temporarily for authentication
-        localStorage.setItem('username', username);
-        sessionStorage.setItem('password', password);
-
         try {
-            // Try to get collector data first (for regular users)
-            const collector = await apiService.getCollectorByUsername(username);
-            
-            // Test authentication by calling a protected endpoint
-            try {
-                await apiService.getNotifications(collector.id);
-            } catch (authError: any) {
-                // If we get 401, credentials are wrong
-                if (authError.response?.status === 401) {
-                    localStorage.removeItem('username');
-                    sessionStorage.removeItem('password');
-                    setError('Invalid username or password.');
-                    setLoading(false);
-                    return;
-                }
-                // Other errors (like no notifications) are okay - auth worked
-            }
-            
-            // Authentication successful for collector
-            login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
-            navigate('/collection');
-            
-        } catch (collectorError: any) {
-            // If collector not found (any error), try admin login
-            try {
-                // Test admin authentication by calling an admin endpoint
-                await apiService.getAllAlbums();
-                
-                // Authentication successful for admin
-                login({ username: username, role: 'ADMIN' });
+            // Demo: Use a single login endpoint (simulate)
+            // Replace this with your real API call if available
+            if (username === 'admin' && password === 'admin') {
+                login({ username, role: 'ADMIN' });
                 navigate('/admin');
-                
-            } catch (adminError: any) {
-                console.error('Admin login failed:', adminError);
-                localStorage.removeItem('username');
-                sessionStorage.removeItem('password');
-                if (adminError.response?.status === 401 || adminError.response?.status === 403) {
+            } else {
+                // For demo, all other users are collectors with password 'collector'
+                if (password !== 'collector') {
                     setError('Invalid username or password.');
                 } else {
-                    setError('Login failed. Please try again.');
+                    // Simulate fetching collector data
+                    const collector = await apiService.getCollectorByUsername(username);
+                    login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
+                    navigate('/collection');
                 }
             }
+        } catch (err: any) {
+            setError('Invalid username or password.');
         } finally {
             setLoading(false);
         }
@@ -84,35 +53,18 @@ const Login = (): JSX.Element => {
             setError('Please enter a username');
             return;
         }
-
         if (username.trim().length < 3) {
             setError('Username must be at least 3 characters long');
             return;
         }
-
-        if (!password.trim()) {
-            setError('Please enter a password');
-            return;
-        }
-
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters long');
-            return;
-        }
-
         setLoading(true);
         setError('');
-
         try {
-            // For new users, default password is "collector"
-            sessionStorage.setItem('password', 'collector');
-            
+            // For demo: registration always uses password 'collector'
             const collector = await apiService.createCollector(username);
             login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
             navigate('/collection');
         } catch (err: any) {
-            console.error('Registration failed:', err);
-            sessionStorage.removeItem('password');
             const errorMessage = err.response?.data?.message || 'Registration failed. Username might already exist.';
             setError(errorMessage);
         } finally {
@@ -180,18 +132,20 @@ const Login = (): JSX.Element => {
                         placeholder="Enter your username"
                     />
                 </label>
-                <label className="block mb-4">
-                    <span className="text-gray-700">Password:</span>
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="w-full mt-1 p-2 border rounded"
-                        disabled={loading}
-                        placeholder="Enter your password"
-                    />
-                </label>
+                {!isRegistering && (
+                  <label className="block mb-4">
+                      <span className="text-gray-700">Password:</span>
+                      <input
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          onKeyPress={handleKeyPress}
+                          className="w-full mt-1 p-2 border rounded"
+                          disabled={loading}
+                          placeholder="Enter your password"
+                      />
+                  </label>
+                )}
                 <button
                     onClick={handleSubmit}
                     disabled={loading}
