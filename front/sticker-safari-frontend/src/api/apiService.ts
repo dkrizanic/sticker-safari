@@ -10,19 +10,18 @@ const api = axios.create({
     },
 });
 
-// Add request interceptor for Basic Auth
+// Add request interceptor for JWT Auth
 api.interceptors.request.use(config => {
-    // Skip auth for login and registration endpoints
+    // Skip auth for login, registration and public endpoints
     const isPublicEndpoint = 
+        config.url?.includes('/auth/') ||
         config.url?.includes('/collectors/username/') || 
         (config.url?.includes('/collectors') && config.method === 'post');
     
     if (!isPublicEndpoint) {
-        const username = localStorage.getItem('username');
-        const password = sessionStorage.getItem('password') || 'collector';
-        if (username) {
-            const credentials = btoa(`${username}:${password}`);
-            config.headers.Authorization = `Basic ${credentials}`;
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
         }
     }
     return config;

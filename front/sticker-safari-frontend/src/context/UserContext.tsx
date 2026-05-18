@@ -34,18 +34,18 @@ export const UserProvider = ({ children }: UserProviderProps): JSX.Element => {
         localStorage.removeItem('username');
         localStorage.removeItem('userId');
         localStorage.removeItem('userRole');
-        sessionStorage.removeItem('password');
+        localStorage.removeItem('token');
     };
 
     // Restore session on mount
     useEffect(() => {
         const restoreSession = async () => {
             const username = localStorage.getItem('username');
-            const password = sessionStorage.getItem('password');
+            const token = localStorage.getItem('token');
             const userRole = localStorage.getItem('userRole');
             const userId = localStorage.getItem('userId');
 
-            if (!username || !password) {
+            if (!username || !token) {
                 setIsRestoring(false);
                 return;
             }
