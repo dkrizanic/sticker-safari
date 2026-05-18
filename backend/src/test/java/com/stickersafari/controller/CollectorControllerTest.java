@@ -138,7 +138,7 @@ class CollectorControllerTest {
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(0, response.get("currentPage"));
-        assertEquals(5, response.get("totalItems"));
+        assertEquals(5L, response.get("totalItems"));
         assertEquals(1, response.get("totalPages"));
         
         @SuppressWarnings("unchecked")
@@ -183,7 +183,7 @@ class CollectorControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(1, response.get("totalItems"));
+        assertEquals(1L, response.get("totalItems"));
         
         @SuppressWarnings("unchecked")
         List<CollectorResponse> collectors = (List<CollectorResponse>) response.get("collectors");
@@ -266,7 +266,7 @@ class CollectorControllerTest {
         // Then
         assertNotNull(responseEntity);
         Map<String, Object> response = responseEntity.getBody();
-        assertEquals(10, response.get("totalItems"));
+        assertEquals(10L, response.get("totalItems"));
         assertEquals(2, response.get("totalPages"));
         
         verify(collectorService, times(1)).getAllCollectorsWithPagination(argThat(pageable -> 

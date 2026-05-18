@@ -162,6 +162,7 @@ class StickerControllerTest {
         Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
         
         when(stickerService.getAllStickersWithPagination(any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
         when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
             Sticker sticker = invocation.getArgument(0);
             StickerResponse response = new StickerResponse();
@@ -182,7 +183,7 @@ class StickerControllerTest {
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(0, response.get("currentPage"));
-        assertEquals(5, response.get("totalItems"));
+        assertEquals(5L, response.get("totalItems"));
         assertEquals(1, response.get("totalPages"));
         
         @SuppressWarnings("unchecked")
@@ -208,7 +209,13 @@ class StickerControllerTest {
         List<Sticker> searchResults = Collections.singletonList(lion);
         Page<Sticker> stickerPage = new PageImpl<>(searchResults, pageRequest, searchResults.size());
         
+        StickerResponse lionResponse = new StickerResponse();
+        lionResponse.setId(1L);
+        lionResponse.setName("Lion");
+        lionResponse.setLatinName("Panthera leo");
+        
         when(stickerService.searchStickers(eq(searchQuery), any())).thenReturn(stickerPage);
+        when(stickerMapper.toResponseList(anyList())).thenReturn(Collections.singletonList(lionResponse));
         when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
             Sticker sticker = invocation.getArgument(0);
             StickerResponse response = new StickerResponse();
@@ -229,7 +236,7 @@ class StickerControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(1, response.get("totalItems"));
+        assertEquals(1L, response.get("totalItems"));
         
         @SuppressWarnings("unchecked")
         List<StickerResponse> stickers = (List<StickerResponse>) response.get("stickers");
@@ -267,7 +274,7 @@ class StickerControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(5, response.get("totalItems"));
+        assertEquals(5L, response.get("totalItems"));
         
         verify(stickerService, times(1)).getStickersOfAlbumWithPagination(eq(albumId), any());
     }
@@ -366,7 +373,7 @@ class StickerControllerTest {
         // Then
         assertNotNull(responseEntity);
         Map<String, Object> response = responseEntity.getBody();
-        assertEquals(10, response.get("totalItems"));
+        assertEquals(10L, response.get("totalItems"));
         assertEquals(2, response.get("totalPages"));
         
         verify(stickerService, times(1)).getAllStickersWithPagination(argThat(pageable -> 

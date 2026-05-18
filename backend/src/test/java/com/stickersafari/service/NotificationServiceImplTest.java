@@ -68,16 +68,17 @@ class NotificationServiceImplTest {
     void getNotifications_ShouldReturnAllNotifications_AndMarkUnreadAsRead() {
         // Given
         when(notificationRepository.findByRecipientId(1L)).thenReturn(testNotifications);
-        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         List<Notification> result = notificationService.getNotifications(1L);
 
         // Then
         assertThat(result).hasSize(3);
-        assertThat(result).allMatch(Notification::isRead);
+        // Notifications should NOT be auto-marked as read anymore
+        assertThat(result.stream().filter(n -> !n.isRead()).count()).isEqualTo(2); // 2 are still unread
+        assertThat(result.stream().filter(Notification::isRead).count()).isEqualTo(1); // 1 was already read
         verify(notificationRepository).findByRecipientId(1L);
-        verify(notificationRepository, times(2)).save(any(Notification.class)); // Only 2 were unread
+        verify(notificationRepository, never()).save(any(Notification.class)); // No auto-save
     }
 
     @Test
@@ -88,16 +89,16 @@ class NotificationServiceImplTest {
         unreadNotifications.add(testNotifications.get(1));
 
         when(notificationRepository.findByRecipientIdAndReadFalse(1L)).thenReturn(unreadNotifications);
-        when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         List<Notification> result = notificationService.getUnreadNotifications(1L);
 
         // Then
         assertThat(result).hasSize(2);
-        assertThat(result).allMatch(Notification::isRead);
+        // Notifications should NOT be auto-marked as read anymore
+        assertThat(result).allMatch(n -> !n.isRead()); // All should still be unread
         verify(notificationRepository).findByRecipientIdAndReadFalse(1L);
-        verify(notificationRepository, times(2)).save(any(Notification.class));
+        verify(notificationRepository, never()).save(any(Notification.class)); // No auto-save
     }
 
     @Test
