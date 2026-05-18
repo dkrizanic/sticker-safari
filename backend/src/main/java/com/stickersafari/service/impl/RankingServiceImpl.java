@@ -78,6 +78,29 @@ public class RankingServiceImpl implements RankingService {
         return new PagedRankingResponse(rankings, page, totalPages, totalItems, size);
     }
 
+    @Override
+    public PagedRankingResponse getRankingByType(String type, Integer year, Integer month, int page, int size, String search) {
+        log.debug("Getting ranking by type: {} (year={}, month={}, page={}, size={}, search={})", 
+                  type, year, month, page, size, search);
+        
+        return switch (type.toLowerCase()) {
+            case "monthly" -> {
+                if (year == null || month == null) {
+                    throw new IllegalArgumentException("Year and month are required for monthly ranking");
+                }
+                yield getMonthlyRanking(year, month, page, size, search);
+            }
+            case "yearly" -> {
+                if (year == null) {
+                    throw new IllegalArgumentException("Year is required for yearly ranking");
+                }
+                yield getYearlyRanking(year, page, size, search);
+            }
+            case "all-time" -> getAllTimeRanking(page, size, search);
+            default -> throw new IllegalArgumentException("Invalid ranking type: " + type);
+        };
+    }
+
     // Legacy methods for backwards compatibility
     @Override
     @Deprecated

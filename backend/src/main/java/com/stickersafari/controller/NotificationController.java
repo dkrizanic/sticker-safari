@@ -17,12 +17,12 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping("/{collectorId}")
-    public List<Notification> getNotifications(@PathVariable("collectorId") Long collectorId, @RequestParam("read") boolean read) {
-        log.debug("Getting notifications for collector {}, read={}", collectorId, read);
-        if (read) {
-            return notificationService.getNotifications(collectorId);
-        }
-        return notificationService.getUnreadNotifications(collectorId);
+    public List<Notification> getNotifications(
+            @PathVariable("collectorId") Long collectorId,
+            @RequestParam(defaultValue = "unread") String filter) {
+        
+        log.debug("Getting notifications for collector {}, filter={}", collectorId, filter);
+        return notificationService.getNotificationsByFilter(collectorId, filter);
     }
     
     @PutMapping("/{notificationId}/read")

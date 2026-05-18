@@ -8,6 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,19 @@ class CollectorCrudIntegrationTest {
 
     @Autowired
     private CollectorRepository collectorRepository;
+
+    /**
+     * Creates a mock Authentication object for testing.
+     * @param username The username
+     * @param isAdmin Whether the user has admin role
+     * @return Authentication object
+     */
+    private Authentication createAuthentication(String username, boolean isAdmin) {
+        List<SimpleGrantedAuthority> authorities = isAdmin
+                ? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"))
+                : List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return new UsernamePasswordAuthenticationToken(username, null, authorities);
+    }
 
     @Test
     @DisplayName("Should create new collector successfully")
@@ -98,8 +114,9 @@ class CollectorCrudIntegrationTest {
         CollectorRequest updateRequest = new CollectorRequest();
         updateRequest.setUsername("NewUsername");
 
-        // When
-        Collector updated = collectorService.updateCollector(created.getId(), updateRequest);
+        // When - Update as the owner
+        Authentication auth = createAuthentication("OldUsername", false);
+        Collector updated = collectorService.updateCollector(created.getId(), updateRequest, auth);
 
         // Then
         assertThat(updated.getId()).isEqualTo(created.getId());
@@ -116,8 +133,9 @@ class CollectorCrudIntegrationTest {
         CollectorRequest request = new CollectorRequest();
         request.setUsername("NewName");
 
-        // When/Then
-        assertThatThrownBy(() -> collectorService.updateCollector(99999L, request))
+        // When/Then - Update as admin
+        Authentication auth = createAuthentication("admin", true);
+        assertThatThrownBy(() -> collectorService.updateCollector(99999L, request, auth))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Collector not found");
     }
@@ -130,8 +148,9 @@ class CollectorCrudIntegrationTest {
         request.setUsername("UserToDelete");
         Collector created = collectorService.createCollector(request);
 
-        // When
-        collectorService.deleteCollector(created.getId());
+        // When - Delete as the owner
+        Authentication auth = createAuthentication("UserToDelete", false);
+        collectorService.deleteCollector(created.getId(), auth);
 
         // Then
         assertThat(collectorRepository.findById(created.getId())).isEmpty();
@@ -140,8 +159,9 @@ class CollectorCrudIntegrationTest {
     @Test
     @DisplayName("Should throw exception when deleting non-existent collector")
     void testDeleteNonExistentCollector() {
-        // When/Then
-        assertThatThrownBy(() -> collectorService.deleteCollector(99999L))
+        // When/Then - Delete as admin
+        Authentication auth = createAuthentication("admin", true);
+        assertThatThrownBy(() -> collectorService.deleteCollector(99999L, auth))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessageContaining("Collector not found");
     }
@@ -187,5 +207,108 @@ class CollectorCrudIntegrationTest {
         assertThat(response.getDailyStickerCount()).isEqualTo(0);
         assertThat(response.getLastPackOpenDate()).isNull();
         assertThat(response.getOwnedStickers()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should allow user to update their own profile")
+    void testUserCanUpdateOwnProfile() {
+        // Given
+        CollectorRequest createRequest = new CollectorRequest();
+        createRequest.setUsername("OwnerUser");
+        Collector created = collectorService.createCollector(createRequest);
+
+        CollectorRequest updateRequest = new CollectorRequest();
+        updateRequest.setUsername("UpdatedOwnerUser");
+
+        // When - User updates their own profile
+        Authentication auth = createAuthentication("OwnerUser", false);
+        Collector updated = collectorService.updateCollector(created.getId(), updateRequest, auth);
+
+        // Then
+        assertThat(updated.getUsername()).isEqualTo("UpdatedOwnerUser");
+    }
+
+    @Test
+    @DisplayName("Should prevent user from updating another user's profile")
+    void testUserCannotUpdateOtherProfile() {
+        // Given
+        CollectorRequest createRequest = new CollectorRequest();
+        createRequest.setUsername("VictimUser");
+        Collector created = collectorService.createCollector(createRequest);
+
+        CollectorRequest updateRequest = new CollectorRequest();
+        updateRequest.setUsername("HackedUser");
+
+        // When/Then - Different user tries to update
+        Authentication auth = createAuthentication("AttackerUser", false);
+        assertThatThrownBy(() -> collectorService.updateCollector(created.getId(), updateRequest, auth))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class)
+                .hasMessageContaining("You can only modify your own profile");
+    }
+
+    @Test
+    @DisplayName("Should allow admin to update any user's profile")
+    void testAdminCanUpdateAnyProfile() {
+        // Given
+        CollectorRequest createRequest = new CollectorRequest();
+        createRequest.setUsername("RegularUser");
+        Collector created = collectorService.createCollector(createRequest);
+
+        CollectorRequest updateRequest = new CollectorRequest();
+        updateRequest.setUsername("AdminUpdatedUser");
+
+        // When - Admin updates another user's profile
+        Authentication auth = createAuthentication("admin", true);
+        Collector updated = collectorService.updateCollector(created.getId(), updateRequest, auth);
+
+        // Then
+        assertThat(updated.getUsername()).isEqualTo("AdminUpdatedUser");
+    }
+
+    @Test
+    @DisplayName("Should allow user to delete their own profile")
+    void testUserCanDeleteOwnProfile() {
+        // Given
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername("ToDeleteOwn");
+        Collector created = collectorService.createCollector(request);
+
+        // When - User deletes their own profile
+        Authentication auth = createAuthentication("ToDeleteOwn", false);
+        collectorService.deleteCollector(created.getId(), auth);
+
+        // Then
+        assertThat(collectorRepository.findById(created.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Should prevent user from deleting another user's profile")
+    void testUserCannotDeleteOtherProfile() {
+        // Given
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername("ProtectedUser");
+        Collector created = collectorService.createCollector(request);
+
+        // When/Then - Different user tries to delete
+        Authentication auth = createAuthentication("AttackerUser", false);
+        assertThatThrownBy(() -> collectorService.deleteCollector(created.getId(), auth))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class)
+                .hasMessageContaining("You can only delete your own profile");
+    }
+
+    @Test
+    @DisplayName("Should allow admin to delete any user's profile")
+    void testAdminCanDeleteAnyProfile() {
+        // Given
+        CollectorRequest request = new CollectorRequest();
+        request.setUsername("ToDeleteByAdmin");
+        Collector created = collectorService.createCollector(request);
+
+        // When - Admin deletes another user's profile
+        Authentication auth = createAuthentication("admin", true);
+        collectorService.deleteCollector(created.getId(), auth);
+
+        // Then
+        assertThat(collectorRepository.findById(created.getId())).isEmpty();
     }
 }

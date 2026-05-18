@@ -41,27 +41,6 @@ public class Collector {
 
     @Column(name = "stars")
     private Integer stars = 0;
-
-    public void addSticker(Long stickerId) {
-        if (this.ownedStickers.containsKey(stickerId)){
-            this.ownedStickers.put(stickerId, this.ownedStickers.get(stickerId) + 1);
-        } else {
-            this.ownedStickers.put(stickerId, 1);
-        }
-    }
-
-    public void removeSticker(Long stickerId) throws Exception {
-        if (this.ownedStickers.containsKey(stickerId)){
-            Integer newValue = this.ownedStickers.get(stickerId) - 1;
-            if(newValue > 0) {
-                this.ownedStickers.put(stickerId, newValue);
-            } else {
-                this.ownedStickers.remove(stickerId);
-            }
-        } else {
-            throw new Exception("Can't remove sticker " + stickerId + " because " + this.getUsername() + " does not have it");
-        }
-    }
     
     @Override
     public boolean equals(Object o) {

@@ -1,19 +1,24 @@
 package com.stickersafari.service.impl;
 
 import com.stickersafari.dto.CollectorRequest;
+import com.stickersafari.dto.CollectorResponse;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.enums.Role;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.entity.User;
 import com.stickersafari.exception.EntityNotFoundException;
+import com.stickersafari.mapper.CollectorMapper;
 import com.stickersafari.repository.CollectorRepository;
 import com.stickersafari.service.AlbumService;
 import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.StickerService;
+import com.stickersafari.util.PaginationResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -33,6 +39,7 @@ public class CollectorServiceImpl implements CollectorService {
     private final AlbumService albumService;
     private final StickerService stickerService;
     private final PasswordEncoder passwordEncoder;
+    private final CollectorMapper collectorMapper;
 
     @Override
     public Collector findById(Long id) {
@@ -90,21 +97,46 @@ public class CollectorServiceImpl implements CollectorService {
         Collector collector = findById(collectorId);
         
         for (Long stickerId : stickerIds) {
-            collector.addSticker(stickerId);
+            addStickerToCollector(collector, stickerId);
         }
         
         save(collector);
+    }
+    
+    @Override
+    public void addStickerToCollector(Collector collector, Long stickerId) {
+        log.debug("Adding sticker {} to collector {}", stickerId, collector.getId());
+        Map<Long, Integer> ownedStickers = collector.getOwnedStickers();
+        
+        if (ownedStickers.containsKey(stickerId)) {
+            ownedStickers.put(stickerId, ownedStickers.get(stickerId) + 1);
+        } else {
+            ownedStickers.put(stickerId, 1);
+        }
+    }
+    
+    @Override
+    public void removeStickerFromCollector(Collector collector, Long stickerId) {
+        log.debug("Removing sticker {} from collector {}", stickerId, collector.getId());
+        Map<Long, Integer> ownedStickers = collector.getOwnedStickers();
+        
+        if (!ownedStickers.containsKey(stickerId)) {
+            throw new IllegalStateException("Cannot remove sticker " + stickerId + 
+                " because " + collector.getUsername() + " does not have it");
+        }
+        
+        Integer newValue = ownedStickers.get(stickerId) - 1;
+        if (newValue > 0) {
+            ownedStickers.put(stickerId, newValue);
+        } else {
+            ownedStickers.remove(stickerId);
+        }
     }
 
     @Override
     public List<Collector> getAllCollectors() {
         log.debug("Getting all collectors");
-        return collectorRepository.findAll().stream()
-                .filter(collector -> collector.getOwnedStickers() != null && 
-                        !collector.getOwnedStickers().isEmpty() &&
-                        collector.getOwnedStickers().values().stream()
-                                .anyMatch(quantity -> quantity > 0))
-                .toList();
+        return collectorRepository.findAll();
     }
 
     @Override
@@ -133,8 +165,18 @@ public class CollectorServiceImpl implements CollectorService {
 
     @Override
     @Transactional
-    public Collector updateCollector(Long collectorId, CollectorRequest request) {
-        log.info("Updating collector with ID: {}", collectorId);
+    public Collector updateCollector(Long collectorId, CollectorRequest request, org.springframework.security.core.Authentication authentication) {
+        log.info("Updating collector with ID: {} by user: {}", collectorId, authentication.getName());
+        
+        // Check authorization - extract roles internally
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        
+        if (!canModifyCollector(collectorId, authentication.getName(), isAdmin)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                "You can only modify your own profile");
+        }
+        
         Collector collector = findById(collectorId);
         collector.setUsername(request.getUsername());
         return collectorRepository.save(collector);
@@ -142,8 +184,18 @@ public class CollectorServiceImpl implements CollectorService {
 
     @Override
     @Transactional
-    public void deleteCollector(Long collectorId) {
-        log.info("Deleting collector with ID: {}", collectorId);
+    public void deleteCollector(Long collectorId, org.springframework.security.core.Authentication authentication) {
+        log.info("Deleting collector with ID: {} by user: {}", collectorId, authentication.getName());
+        
+        // Check authorization - extract roles internally
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
+        
+        if (!canModifyCollector(collectorId, authentication.getName(), isAdmin)) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                "You can only delete your own profile");
+        }
+        
         Collector collector = findById(collectorId);
         collectorRepository.delete(collector);
     }
@@ -184,5 +236,31 @@ public class CollectorServiceImpl implements CollectorService {
         // Collectors can only modify their own profile
         Collector collector = findById(collectorId);
         return collector.getUsername().equals(username);
+    }
+    
+    @Override
+    public Map<String, Object> getCollectorsPaginated(int page, int size, String sortBy, String sortDir, String search) {
+        log.debug("Getting paginated collectors - page: {}, size: {}, sortBy: {}, sortDir: {}, search: {}", 
+                  page, size, sortBy, sortDir, search);
+        
+        // Build pagination and sorting
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        
+        // Get paginated data
+        Page<Collector> collectorPage;
+        if (search != null && !search.trim().isEmpty()) {
+            collectorPage = searchCollectors(search, pageable);
+        } else {
+            collectorPage = getAllCollectorsWithPagination(pageable);
+        }
+        
+        // Map to response DTOs
+        List<CollectorResponse> collectors = collectorPage.getContent().stream()
+                .map(collectorMapper::toResponse)
+                .collect(Collectors.toList());
+        
+        // Build pagination response
+        return PaginationResponseBuilder.build(collectors, collectorPage, "collectors");
     }
 }

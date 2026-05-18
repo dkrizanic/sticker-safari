@@ -12,5 +12,5 @@ public class RankingEntry {
     private String username;
     private Long completions;
     private Long stars;
-    private Long score; // (stars * 5) + completions
+    private Long score; 
 }

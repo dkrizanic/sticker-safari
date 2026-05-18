@@ -2,6 +2,7 @@ package com.stickersafari.controller;
 
 import com.stickersafari.dto.PagedRankingResponse;
 import com.stickersafari.dto.RankingEntry;
+import com.stickersafari.dto.RankingFilterRequest;
 import com.stickersafari.service.RankingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,10 +46,11 @@ class RankingControllerPaginationTest {
                 10  // pageSize
         );
 
-        when(rankingService.getAllTimeRanking(0, 10, null)).thenReturn(response);
+        when(rankingService.getRankingByType("all-time", null, null, 0, 10, null)).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, null);
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, null);
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
@@ -63,7 +65,7 @@ class RankingControllerPaginationTest {
         assertThat(result.getBody().getRankings().get(0).getCompletions()).isEqualTo(2);
         assertThat(result.getBody().getRankings().get(0).getScore()).isEqualTo(17);
 
-        verify(rankingService).getAllTimeRanking(0, 10, null);
+        verify(rankingService).getRankingByType("all-time", null, null, 0, 10, null);
     }
 
     @Test
@@ -77,10 +79,11 @@ class RankingControllerPaginationTest {
                 0, 1, 1, 10
         );
 
-        when(rankingService.getAllTimeRanking(0, 10, "Alice")).thenReturn(response);
+        when(rankingService.getRankingByType("all-time", null, null, 0, 10, "Alice")).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, "Alice");
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, "Alice");
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
@@ -89,7 +92,7 @@ class RankingControllerPaginationTest {
         assertThat(result.getBody().getTotalItems()).isEqualTo(1);
         assertThat(result.getBody().getRankings().get(0).getUsername()).isEqualTo("Alice");
 
-        verify(rankingService).getAllTimeRanking(0, 10, "Alice");
+        verify(rankingService).getRankingByType("all-time", null, null, 0, 10, "Alice");
     }
 
     @Test
@@ -101,10 +104,11 @@ class RankingControllerPaginationTest {
                 0, 1, 0, 10
         );
 
-        when(rankingService.getAllTimeRanking(0, 10, null)).thenReturn(response);
+        when(rankingService.getRankingByType("all-time", null, null, 0, 10, null)).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, null);
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, null);
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
@@ -112,7 +116,7 @@ class RankingControllerPaginationTest {
         assertThat(result.getBody().getCurrentPage()).isEqualTo(0);
         assertThat(result.getBody().getPageSize()).isEqualTo(10);
 
-        verify(rankingService).getAllTimeRanking(0, 10, null);
+        verify(rankingService).getRankingByType("all-time", null, null, 0, 10, null);
     }
 
     @Test
@@ -124,17 +128,18 @@ class RankingControllerPaginationTest {
                 0, 1, 0, 10
         );
 
-        when(rankingService.getMonthlyRanking(2026, 5, 0, 10, null)).thenReturn(response);
+        when(rankingService.getRankingByType("monthly", 2026, 5, 0, 10, null)).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getMonthlyRanking(2026, 5, 0, 10, null);
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, null);
+        ResponseEntity<PagedRankingResponse> result = rankingController.getMonthlyRanking(2026, 5, filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getCurrentPage()).isEqualTo(0);
 
-        verify(rankingService).getMonthlyRanking(2026, 5, 0, 10, null);
+        verify(rankingService).getRankingByType("monthly", 2026, 5, 0, 10, null);
     }
 
     @Test
@@ -148,17 +153,18 @@ class RankingControllerPaginationTest {
                 0, 1, 1, 10
         );
 
-        when(rankingService.getMonthlyRanking(2026, 5, 0, 10, "Bob")).thenReturn(response);
+        when(rankingService.getRankingByType("monthly", 2026, 5, 0, 10, "Bob")).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getMonthlyRanking(2026, 5, 0, 10, "Bob");
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, "Bob");
+        ResponseEntity<PagedRankingResponse> result = rankingController.getMonthlyRanking(2026, 5, filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getRankings().get(0).getUsername()).isEqualTo("Bob");
 
-        verify(rankingService).getMonthlyRanking(2026, 5, 0, 10, "Bob");
+        verify(rankingService).getRankingByType("monthly", 2026, 5, 0, 10, "Bob");
     }
 
     @Test
@@ -170,10 +176,11 @@ class RankingControllerPaginationTest {
                 1, 5, 45, 10
         );
 
-        when(rankingService.getYearlyRanking(2026, 1, 10, null)).thenReturn(response);
+        when(rankingService.getRankingByType("yearly", 2026, null, 1, 10, null)).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getYearlyRanking(2026, 1, 10, null);
+        RankingFilterRequest filter = new RankingFilterRequest(1, 10, null);
+        ResponseEntity<PagedRankingResponse> result = rankingController.getYearlyRanking(2026, filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
@@ -182,7 +189,7 @@ class RankingControllerPaginationTest {
         assertThat(result.getBody().getTotalPages()).isEqualTo(5);
         assertThat(result.getBody().getTotalItems()).isEqualTo(45);
 
-        verify(rankingService).getYearlyRanking(2026, 1, 10, null);
+        verify(rankingService).getRankingByType("yearly", 2026, null, 1, 10, null);
     }
 
     @Test
@@ -194,15 +201,16 @@ class RankingControllerPaginationTest {
                 0, 1, 0, 10
         );
 
-        when(rankingService.getYearlyRanking(2026, 0, 10, "Test")).thenReturn(response);
+        when(rankingService.getRankingByType("yearly", 2026, null, 0, 10, "Test")).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getYearlyRanking(2026, 0, 10, "Test");
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, "Test");
+        ResponseEntity<PagedRankingResponse> result = rankingController.getYearlyRanking(2026, filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
 
-        verify(rankingService).getYearlyRanking(2026, 0, 10, "Test");
+        verify(rankingService).getRankingByType("yearly", 2026, null, 0, 10, "Test");
     }
 
     @Test
@@ -214,10 +222,11 @@ class RankingControllerPaginationTest {
                 0, 0, 0, 10
         );
 
-        when(rankingService.getAllTimeRanking(0, 10, "NonExistent")).thenReturn(response);
+        when(rankingService.getRankingByType("all-time", null, null, 0, 10, "NonExistent")).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 10, "NonExistent");
+        RankingFilterRequest filter = new RankingFilterRequest(0, 10, "NonExistent");
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
@@ -226,7 +235,7 @@ class RankingControllerPaginationTest {
         assertThat(result.getBody().getTotalItems()).isEqualTo(0);
         assertThat(result.getBody().getTotalPages()).isEqualTo(0);
 
-        verify(rankingService).getAllTimeRanking(0, 10, "NonExistent");
+        verify(rankingService).getRankingByType("all-time", null, null, 0, 10, "NonExistent");
     }
 
     @Test
@@ -238,17 +247,18 @@ class RankingControllerPaginationTest {
                 0, 1, 20, 20
         );
 
-        when(rankingService.getAllTimeRanking(0, 20, null)).thenReturn(response);
+        when(rankingService.getRankingByType("all-time", null, null, 0, 20, null)).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(0, 20, null);
+        RankingFilterRequest filter = new RankingFilterRequest(0, 20, null);
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getPageSize()).isEqualTo(20);
 
-        verify(rankingService).getAllTimeRanking(0, 20, null);
+        verify(rankingService).getRankingByType("all-time", null, null, 0, 20, null);
     }
 
     @Test
@@ -260,10 +270,11 @@ class RankingControllerPaginationTest {
                 99, 100, 1000, 10
         );
 
-        when(rankingService.getAllTimeRanking(99, 10, null)).thenReturn(response);
+        when(rankingService.getRankingByType("all-time", null, null, 99, 10, null)).thenReturn(response);
 
         // When
-        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(99, 10, null);
+        RankingFilterRequest filter = new RankingFilterRequest(99, 10, null);
+        ResponseEntity<PagedRankingResponse> result = rankingController.getAllTimeRanking(filter);
 
         // Then
         assertThat(result.getStatusCode().value()).isEqualTo(200);
@@ -271,6 +282,6 @@ class RankingControllerPaginationTest {
         assertThat(result.getBody().getCurrentPage()).isEqualTo(99);
         assertThat(result.getBody().getTotalPages()).isEqualTo(100);
 
-        verify(rankingService).getAllTimeRanking(99, 10, null);
+        verify(rankingService).getRankingByType("all-time", null, null, 99, 10, null);
     }
 }

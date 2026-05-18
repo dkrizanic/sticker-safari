@@ -16,7 +16,7 @@ public interface TradingService {
 
     List<TradeOffer> getPendingSentTradeOffers(Long collectorId);
 
-    TradeOffer acceptTradeOffer(AnswerPendingTradeOfferRequest request) throws Exception;
+    TradeOffer acceptTradeOffer(AnswerPendingTradeOfferRequest request);
 
     TradeOffer refusePendingTradeOffer(AnswerPendingTradeOfferRequest request);
 

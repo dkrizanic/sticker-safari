@@ -57,67 +57,65 @@ class NotificationControllerTest {
     @Test
     void getNotifications_ShouldReturnAllNotifications_WhenReadIsTrue() {
         // Given
-        when(notificationService.getNotifications(1L)).thenReturn(testNotifications);
+        when(notificationService.getNotificationsByFilter(1L, "all")).thenReturn(testNotifications);
 
         // When
-        List<Notification> result = notificationController.getNotifications(1L, true);
+        List<Notification> result = notificationController.getNotifications(1L, "all");
 
         // Then
         assertThat(result).hasSize(2);
-        verify(notificationService).getNotifications(1L);
-        verify(notificationService, never()).getUnreadNotifications(anyLong());
+        verify(notificationService).getNotificationsByFilter(1L, "all");
     }
 
     @Test
     void getNotifications_ShouldReturnUnreadNotifications_WhenReadIsFalse() {
         // Given
-        when(notificationService.getUnreadNotifications(1L)).thenReturn(testNotifications);
+        when(notificationService.getNotificationsByFilter(1L, "unread")).thenReturn(testNotifications);
 
         // When
-        List<Notification> result = notificationController.getNotifications(1L, false);
+        List<Notification> result = notificationController.getNotifications(1L, "unread");
 
         // Then
         assertThat(result).hasSize(2);
-        verify(notificationService).getUnreadNotifications(1L);
-        verify(notificationService, never()).getNotifications(anyLong());
+        verify(notificationService).getNotificationsByFilter(1L, "unread");
     }
 
     @Test
     void getNotifications_ShouldReturnEmptyList_WhenNoNotifications() {
         // Given
-        when(notificationService.getNotifications(1L)).thenReturn(new ArrayList<>());
+        when(notificationService.getNotificationsByFilter(1L, "all")).thenReturn(new ArrayList<>());
 
         // When
-        List<Notification> result = notificationController.getNotifications(1L, true);
+        List<Notification> result = notificationController.getNotifications(1L, "all");
 
         // Then
         assertThat(result).isEmpty();
-        verify(notificationService).getNotifications(1L);
+        verify(notificationService).getNotificationsByFilter(1L, "all");
     }
 
     @Test
     void getNotifications_ShouldSortNotifications() {
         // Given
-        when(notificationService.getNotifications(1L)).thenReturn(testNotifications);
+        when(notificationService.getNotificationsByFilter(1L, "all")).thenReturn(testNotifications);
 
         // When
-        List<Notification> result = notificationController.getNotifications(1L, true);
+        List<Notification> result = notificationController.getNotifications(1L, "all");
 
         // Then
         assertThat(result).isNotNull();
-        verify(notificationService).getNotifications(1L);
+        verify(notificationService).getNotificationsByFilter(1L, "all");
     }
 
     @Test
     void getNotifications_ShouldWorkWithDifferentCollectors() {
         // Given
-        when(notificationService.getNotifications(2L)).thenReturn(testNotifications);
+        when(notificationService.getNotificationsByFilter(2L, "all")).thenReturn(testNotifications);
 
         // When
-        List<Notification> result = notificationController.getNotifications(2L, true);
+        List<Notification> result = notificationController.getNotifications(2L, "all");
 
         // Then
         assertThat(result).isNotNull();
-        verify(notificationService).getNotifications(2L);
+        verify(notificationService).getNotificationsByFilter(2L, "all");
     }
 }

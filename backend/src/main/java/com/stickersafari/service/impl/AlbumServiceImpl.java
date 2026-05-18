@@ -217,11 +217,7 @@ public class AlbumServiceImpl implements AlbumService {
         
         // Remove one copy of each sticker from the album
         for (Sticker sticker : album.getStickers()) {
-            try {
-                collector.removeSticker(sticker.getId());
-            } catch (Exception e) {
-                throw new IllegalStateException("Error removing sticker: " + e.getMessage());
-            }
+            collectorService.removeStickerFromCollector(collector, sticker.getId());
         }
         
         // Award a star ONLY if this is the first time completing this album AND they're in top 3

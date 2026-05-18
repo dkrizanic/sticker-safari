@@ -10,6 +10,9 @@ public interface RankingService {
     PagedRankingResponse getYearlyRanking(int year, int page, int size, String search);
     PagedRankingResponse getAllTimeRanking(int page, int size, String search);
     
+    // Unified pagination and search handler
+    PagedRankingResponse getRankingByType(String type, Integer year, Integer month, int page, int size, String search);
+    
     // Legacy methods for backwards compatibility (deprecated)
     @Deprecated
     List<RankingEntry> getMonthlyRanking(int year, int month);

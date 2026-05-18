@@ -1,5 +1,6 @@
 package com.stickersafari.controller;
 
+import com.stickersafari.dto.StickerFilterRequest;
 import com.stickersafari.dto.StickerResponse;
 import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
@@ -158,23 +159,17 @@ class StickerControllerTest {
     @DisplayName("Admin endpoint: Get paginated stickers without filters")
     void testgetStickersWithPaginationNoFilters() {
         // Given
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
-        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("stickers", testStickerResponses);
+        mockResponse.put("currentPage", 0);
+        mockResponse.put("totalItems", 5L);
+        mockResponse.put("totalPages", 1);
         
-        when(stickerService.getAllStickersWithPagination(any())).thenReturn(stickerPage);
-        when(stickerMapper.toResponseList(anyList())).thenReturn(testStickerResponses);
-        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
-            Sticker sticker = invocation.getArgument(0);
-            StickerResponse response = new StickerResponse();
-            response.setId(sticker.getId());
-            response.setName(sticker.getName());
-            return response;
-        });
+        when(stickerService.getFilteredStickers(0, 10, "id", "asc", null, null)).thenReturn(mockResponse);
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
-            0, 10, "id", "asc", null, null
-        );
+        StickerFilterRequest filter = new StickerFilterRequest(0, 10, null, null, "id", "asc");
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(filter);
 
         // Then
         assertNotNull(responseEntity);
@@ -182,15 +177,15 @@ class StickerControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(0, response.get("currentPage"));
-        assertEquals(5L, response.get("totalItems"));
-        assertEquals(1, response.get("totalPages"));
+        assertEquals(0, (int)response.get("currentPage"));
+        assertEquals(5L, (long)response.get("totalItems"));
+        assertEquals(1, (int)response.get("totalPages"));
         
         @SuppressWarnings("unchecked")
         List<StickerResponse> stickers = (List<StickerResponse>) response.get("stickers");
         assertEquals(5, stickers.size());
         
-        verify(stickerService, times(1)).getAllStickersWithPagination(any());
+        verify(stickerService, times(1)).getFilteredStickers(0, 10, "id", "asc", null, null);
     }
 
     @Test
@@ -198,37 +193,23 @@ class StickerControllerTest {
     void testSearchStickersPaginated() {
         // Given
         String searchQuery = "Lion";
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
-        
-        Sticker lion = new Sticker();
-        lion.setId(1L);
-        lion.setName("Lion");
-        lion.setLatinName("Panthera leo");
-        lion.setAlbum(testAlbum);
-        
-        List<Sticker> searchResults = Collections.singletonList(lion);
-        Page<Sticker> stickerPage = new PageImpl<>(searchResults, pageRequest, searchResults.size());
         
         StickerResponse lionResponse = new StickerResponse();
         lionResponse.setId(1L);
         lionResponse.setName("Lion");
         lionResponse.setLatinName("Panthera leo");
         
-        when(stickerService.searchStickers(eq(searchQuery), any())).thenReturn(stickerPage);
-        when(stickerMapper.toResponseList(anyList())).thenReturn(Collections.singletonList(lionResponse));
-        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
-            Sticker sticker = invocation.getArgument(0);
-            StickerResponse response = new StickerResponse();
-            response.setId(sticker.getId());
-            response.setName(sticker.getName());
-            response.setLatinName(sticker.getLatinName());
-            return response;
-        });
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("stickers", Collections.singletonList(lionResponse));
+        mockResponse.put("currentPage", 0);
+        mockResponse.put("totalItems", 1L);
+        mockResponse.put("totalPages", 1);
+        
+        when(stickerService.getFilteredStickers(0, 10, "name", "asc", searchQuery, null)).thenReturn(mockResponse);
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
-            0, 10, "name", "asc", searchQuery, null
-        );
+        StickerFilterRequest filter = new StickerFilterRequest(0, 10, searchQuery, null, "name", "asc");
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(filter);
 
         // Then
         assertNotNull(responseEntity);
@@ -236,14 +217,14 @@ class StickerControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(1L, response.get("totalItems"));
+        assertEquals(1L, (long)response.get("totalItems"));
         
         @SuppressWarnings("unchecked")
         List<StickerResponse> stickers = (List<StickerResponse>) response.get("stickers");
         assertEquals(1, stickers.size());
         assertEquals("Lion", stickers.get(0).getName());
         
-        verify(stickerService, times(1)).searchStickers(eq(searchQuery), any());
+        verify(stickerService, times(1)).getFilteredStickers(0, 10, "name", "asc", searchQuery, null);
     }
 
     @Test
@@ -251,22 +232,18 @@ class StickerControllerTest {
     void testgetStickersWithPaginationByAlbum() {
         // Given
         Long albumId = 1L;
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
-        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, testStickers.size());
         
-        when(stickerService.getStickersOfAlbumWithPagination(eq(albumId), any())).thenReturn(stickerPage);
-        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
-            Sticker sticker = invocation.getArgument(0);
-            StickerResponse response = new StickerResponse();
-            response.setId(sticker.getId());
-            response.setName(sticker.getName());
-            return response;
-        });
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("stickers", testStickerResponses);
+        mockResponse.put("currentPage", 0);
+        mockResponse.put("totalItems", 5L);
+        mockResponse.put("totalPages", 1);
+        
+        when(stickerService.getFilteredStickers(0, 10, "id", "asc", null, albumId)).thenReturn(mockResponse);
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
-            0, 10, "id", "asc", null, albumId
-        );
+        StickerFilterRequest filter = new StickerFilterRequest(0, 10, null, albumId, "id", "asc");
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(filter);
 
         // Then
         assertNotNull(responseEntity);
@@ -274,9 +251,9 @@ class StickerControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(5L, response.get("totalItems"));
+        assertEquals(5L, (long)response.get("totalItems"));
         
-        verify(stickerService, times(1)).getStickersOfAlbumWithPagination(eq(albumId), any());
+        verify(stickerService, times(1)).getFilteredStickers(0, 10, "id", "asc", null, albumId);
     }
 
     @Test
@@ -296,17 +273,14 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
-            0, 10, "name", "desc", null, null
-        );
+        StickerFilterRequest filter = new StickerFilterRequest(0, 10, null, null, "name", "desc");
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(filter);
 
         // Then
         assertNotNull(responseEntity);
         assertEquals(200, responseEntity.getStatusCode().value());
         
-        verify(stickerService, times(1)).getAllStickersWithPagination(argThat(pageable -> 
-            pageable.getSort().getOrderFor("name").getDirection() == Sort.Direction.DESC
-        ));
+        verify(stickerService, times(1)).getFilteredStickers(0, 10, "name", "desc", null, null);
     }
 
     @Test
@@ -335,16 +309,14 @@ class StickerControllerTest {
         });
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
-            0, 10, "id", "asc", searchQuery, albumId
-        );
+        StickerFilterRequest filter = new StickerFilterRequest(0, 10, searchQuery, albumId, "name", "asc");
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(filter);
 
         // Then
         assertNotNull(responseEntity);
         assertEquals(200, responseEntity.getStatusCode().value());
         
-        // Note: Current implementation prioritizes search over album filter
-        verify(stickerService, times(1)).searchStickers(eq(searchQuery), any());
+        verify(stickerService, times(1)).getFilteredStickers(0, 10, "name", "asc", searchQuery, albumId);
         verify(stickerService, never()).getStickersOfAlbumWithPagination(anyLong(), any());
     }
 
@@ -353,31 +325,25 @@ class StickerControllerTest {
     void testgetStickersWithPaginationDifferentPageSizes() {
         // Given
         int pageSize = 5;
-        PageRequest pageRequest = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
-        Page<Sticker> stickerPage = new PageImpl<>(testStickers, pageRequest, 10);
         
-        when(stickerService.getAllStickersWithPagination(any())).thenReturn(stickerPage);
-        when(stickerMapper.toResponse(any(Sticker.class))).thenAnswer(invocation -> {
-            Sticker sticker = invocation.getArgument(0);
-            StickerResponse response = new StickerResponse();
-            response.setId(sticker.getId());
-            response.setName(sticker.getName());
-            return response;
-        });
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("stickers", testStickerResponses);
+        mockResponse.put("currentPage", 1);
+        mockResponse.put("totalItems", 10L);
+        mockResponse.put("totalPages", 2);
+        
+        when(stickerService.getFilteredStickers(1, pageSize, "id", "asc", null, null)).thenReturn(mockResponse);
 
         // When
-        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(
-            0, pageSize, "id", "asc", null, null
-        );
+        StickerFilterRequest filter = new StickerFilterRequest(1, 5, null, null, "id", "asc");
+        ResponseEntity<Map<String, Object>> responseEntity = stickerController.getStickersWithPagination(filter);
 
         // Then
         assertNotNull(responseEntity);
         Map<String, Object> response = responseEntity.getBody();
-        assertEquals(10L, response.get("totalItems"));
-        assertEquals(2, response.get("totalPages"));
+        assertEquals(10L, (long)response.get("totalItems"));
+        assertEquals(2, (int)response.get("totalPages"));
         
-        verify(stickerService, times(1)).getAllStickersWithPagination(argThat(pageable -> 
-            pageable.getPageSize() == pageSize
-        ));
+        verify(stickerService, times(1)).getFilteredStickers(1, pageSize, "id", "asc", null, null);
     }
 }

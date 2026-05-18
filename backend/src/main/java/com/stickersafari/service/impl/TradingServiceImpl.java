@@ -40,13 +40,7 @@ public class TradingServiceImpl implements TradingService {
         TradeOffer tradeOffer = mapSpecificTradeOfferRequestToTradeOffer(request, sender, receiver);
         tradeOfferRepository.save(tradeOffer);
 
-        Notification notification = new Notification();
-        notification.setCreatedAt(LocalDateTime.now());
-        notification.setRead(false);
-        notification.setRecipient(receiver);
-        notification.setMessage("You have received a trade offer from " + sender.getUsername());
-
-        notificationService.saveNotification(notification);
+        createAndSaveNotification(receiver, "You have received a trade offer from " + sender.getUsername());
 
         return tradeOffer;
     }
@@ -62,31 +56,30 @@ public class TradingServiceImpl implements TradingService {
             throw new TradeOfferException("Sender does not own the offered sticker");
         }
         
-        List<Collector> collectors = collectorService.findPotentialTradingPartners(request.getSenderId(), request.getOfferedStickerId(), request.getReceivedStickerId());
+        // Fetch stickers once to avoid N+1 queries
+        Sticker offeredSticker = stickerService.findOne(request.getOfferedStickerId());
+        Sticker receivedSticker = stickerService.findOne(request.getReceivedStickerId());
+        
+        List<Collector> collectors = collectorService.findPotentialTradingPartners(
+            request.getSenderId(), request.getOfferedStickerId(), request.getReceivedStickerId());
         log.debug("Found {} potential trading partners", collectors.size());
 
-            for (Collector collector : collectors) {
-                SpecificTradeOfferRequest specificTradeOfferRequest = new SpecificTradeOfferRequest();
-
-                specificTradeOfferRequest.setSenderId(sender.getId());
-                specificTradeOfferRequest.setReceiverId(collector.getId());
-                specificTradeOfferRequest.setOfferedStickerId(request.getOfferedStickerId());
-                specificTradeOfferRequest.setReceivedStickerId(request.getReceivedStickerId());
-                specificTradeOfferRequest.setMessage(String.format("Hello, I would like to trade you my sticker %o: %s for your %o:%s",
-                        request.getOfferedStickerId(), stickerService.findOne(request.getOfferedStickerId()).getName(),
-                        request.getReceivedStickerId(), stickerService.findOne(request.getReceivedStickerId()).getName()));
-                TradeOffer tradeOffer = mapSpecificTradeOfferRequestToTradeOffer(specificTradeOfferRequest, sender, collector);
-
-                tradeOfferRepository.save(tradeOffer);
-
-                Notification notification = new Notification();
-                notification.setCreatedAt(LocalDateTime.now());
-                notification.setRead(false);
-                notification.setRecipient(collector);
-                notification.setMessage("You have received a trade offer from " + sender.getUsername());
-
-                notificationService.saveNotification(notification);
-            }
+        for (Collector collector : collectors) {
+            SpecificTradeOfferRequest specificTradeOfferRequest = new SpecificTradeOfferRequest();
+            specificTradeOfferRequest.setSenderId(sender.getId());
+            specificTradeOfferRequest.setReceiverId(collector.getId());
+            specificTradeOfferRequest.setOfferedStickerId(request.getOfferedStickerId());
+            specificTradeOfferRequest.setReceivedStickerId(request.getReceivedStickerId());
+            specificTradeOfferRequest.setMessage(String.format(
+                "Hello, I would like to trade you my sticker %d: %s for your %d: %s",
+                request.getOfferedStickerId(), offeredSticker.getName(),
+                request.getReceivedStickerId(), receivedSticker.getName()));
+            
+            TradeOffer tradeOffer = mapSpecificTradeOfferRequestToTradeOffer(specificTradeOfferRequest, sender, collector);
+            tradeOfferRepository.save(tradeOffer);
+            
+            createAndSaveNotification(collector, "You have received a trade offer from " + sender.getUsername());
+        }
         
         log.info("Sent {} global trade offers", collectors.size());
         return "Sent trade offers to " + collectors.size() + " potential partners";
@@ -104,7 +97,7 @@ public class TradingServiceImpl implements TradingService {
 
     @Override
     @Transactional
-    public TradeOffer acceptTradeOffer(AnswerPendingTradeOfferRequest request) throws Exception {
+    public TradeOffer acceptTradeOffer(AnswerPendingTradeOfferRequest request) {
         log.info("Accepting trade offer: sender={}, receiver={}", request.getSenderId(), request.getReceiverId());
         
         TradeOffer tradeOffer = tradeOfferRepository.findTradeOffer(
@@ -118,23 +111,19 @@ public class TradingServiceImpl implements TradingService {
         Collector sender = collectorService.findById(request.getSenderId());
         Collector receiver = collectorService.findById(request.getReceiverId());
 
-        sender.removeSticker(request.getOfferedStickerId());
-        sender.addSticker(request.getReceivedStickerId());
+        // Execute the trade using service methods
+        collectorService.removeStickerFromCollector(sender, request.getOfferedStickerId());
+        collectorService.addStickerToCollector(sender, request.getReceivedStickerId());
         collectorService.save(sender);
 
-        receiver.removeSticker(request.getReceivedStickerId());
-        receiver.addSticker(request.getOfferedStickerId());
+        collectorService.removeStickerFromCollector(receiver, request.getReceivedStickerId());
+        collectorService.addStickerToCollector(receiver, request.getOfferedStickerId());
         collectorService.save(receiver);
 
         tradeOffer.setStatus(TradeOfferStatus.ACCEPTED);
 
-        Notification notification = new Notification();
-        notification.setCreatedAt(LocalDateTime.now());
-        notification.setRead(false);
-        notification.setRecipient(sender);
-        notification.setMessage(receiver.getUsername() + " accepted your trade offer");
-
-        notificationService.saveNotification(notification);
+        createAndSaveNotification(sender, receiver.getUsername() + " accepted your trade offer");
+        
         log.info("Trade offer accepted successfully");
         return tradeOfferRepository.save(tradeOffer);
     }
@@ -157,16 +146,19 @@ public class TradingServiceImpl implements TradingService {
 
         tradeOffer.setStatus(TradeOfferStatus.REFUSED);
 
-        Notification notification = new Notification();
-        notification.setCreatedAt(LocalDateTime.now());
-        notification.setRead(false);
-        notification.setRecipient(sender);
-        notification.setMessage(receiver.getUsername() + " refused your trade offer");
-
-        notificationService.saveNotification(notification);
+        createAndSaveNotification(sender, receiver.getUsername() + " refused your trade offer");
         
         log.info("Trade offer refused");
         return tradeOfferRepository.save(tradeOffer);
+    }
+    
+    private void createAndSaveNotification(Collector recipient, String message) {
+        Notification notification = new Notification();
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+        notification.setRecipient(recipient);
+        notification.setMessage(message);
+        notificationService.saveNotification(notification);
     }
 
     private TradeOffer mapSpecificTradeOfferRequestToTradeOffer(SpecificTradeOfferRequest request, Collector sender, Collector receiver) {

@@ -66,6 +66,33 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
+    public List<Notification> getReadNotifications(Long collectorId) {
+        log.debug("Getting read notifications for collector ID: {}", collectorId);
+        List<Notification> notifications = notificationRepository.findByRecipientIdAndReadTrue(collectorId);
+        
+        // Sort by createdAt descending (newest first)
+        return notifications.stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Notification> getNotificationsByFilter(Long collectorId, String filter) {
+        log.debug("Getting notifications for collector ID: {} with filter: {}", collectorId, filter);
+        
+        return switch (filter.toLowerCase()) {
+            case "read" -> getReadNotifications(collectorId);
+            case "all" -> getNotifications(collectorId);
+            case "unread" -> getUnreadNotifications(collectorId);
+            default -> {
+                log.warn("Invalid filter value: {}, defaulting to 'unread'", filter);
+                yield getUnreadNotifications(collectorId);
+            }
+        };
+    }
+
+    @Override
+    @Transactional
     public Notification saveNotification(Notification notification) {
         log.info("Saving notification for recipient ID: {}", notification.getRecipient().getId());
         return notificationRepository.save(notification);

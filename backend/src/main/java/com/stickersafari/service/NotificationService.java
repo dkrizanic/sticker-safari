@@ -8,6 +8,8 @@ public interface NotificationService {
 
     List<Notification> getNotifications(Long collectorId);
     List<Notification> getUnreadNotifications(Long collectorId);
+    List<Notification> getReadNotifications(Long collectorId);
+    List<Notification> getNotificationsByFilter(Long collectorId, String filter);
 
     Notification saveNotification(Notification notification);
     

@@ -105,26 +105,21 @@ class CollectorControllerTest {
     @DisplayName("Admin endpoint: Get paginated collectors without search")
     void testGetCollectorsPaginatedNoSearch() {
         // Given
-        List<Collector> collectors = new ArrayList<>();
+        List<CollectorResponse> collectorResponses = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
-            Collector collector = new Collector();
-            collector.setId((long) i);
-            collector.setUsername("User" + i);
-            collector.setOwnedStickers(new HashMap<>());
-            collectors.add(collector);
+            CollectorResponse response = new CollectorResponse();
+            response.setId((long) i);
+            response.setUsername("User" + i);
+            collectorResponses.add(response);
         }
         
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));
-        Page<Collector> collectorPage = new PageImpl<>(collectors, pageRequest, collectors.size());
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("collectors", collectorResponses);
+        mockResponse.put("currentPage", 0);
+        mockResponse.put("totalItems", 5L);
+        mockResponse.put("totalPages", 1);
         
-        when(collectorService.getAllCollectorsWithPagination(any())).thenReturn(collectorPage);
-        when(collectorMapper.toResponse(any(Collector.class))).thenAnswer(invocation -> {
-            Collector collector = invocation.getArgument(0);
-            CollectorResponse response = new CollectorResponse();
-            response.setId(collector.getId());
-            response.setUsername(collector.getUsername());
-            return response;
-        });
+        when(collectorService.getCollectorsPaginated(0, 10, "id", "asc", null)).thenReturn(mockResponse);
 
         // When
         ResponseEntity<Map<String, Object>> responseEntity = collectorController.getCollectorsPaginated(
@@ -137,15 +132,15 @@ class CollectorControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(0, response.get("currentPage"));
-        assertEquals(5L, response.get("totalItems"));
-        assertEquals(1, response.get("totalPages"));
+        assertEquals(0, (int)response.get("currentPage"));
+        assertEquals(5L, (long)response.get("totalItems"));
+        assertEquals(1, (int)response.get("totalPages"));
         
         @SuppressWarnings("unchecked")
-        List<CollectorResponse> collectorResponses = (List<CollectorResponse>) response.get("collectors");
-        assertEquals(5, collectorResponses.size());
+        List<CollectorResponse> collectors = (List<CollectorResponse>) response.get("collectors");
+        assertEquals(5, collectors.size());
         
-        verify(collectorService, times(1)).getAllCollectorsWithPagination(any());
+        verify(collectorService, times(1)).getCollectorsPaginated(0, 10, "id", "asc", null);
     }
 
     @Test
@@ -153,24 +148,18 @@ class CollectorControllerTest {
     void testSearchCollectorsPaginated() {
         // Given
         String searchQuery = "Bob";
-        PageRequest pageRequest = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "username"));
         
-        Collector bob = new Collector();
-        bob.setId(1L);
-        bob.setUsername("Bob");
-        bob.setOwnedStickers(new HashMap<>());
+        CollectorResponse bobResponse = new CollectorResponse();
+        bobResponse.setId(1L);
+        bobResponse.setUsername("Bob");
         
-        List<Collector> searchResults = List.of(bob);
-        Page<Collector> collectorPage = new PageImpl<>(searchResults, pageRequest, searchResults.size());
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("collectors", List.of(bobResponse));
+        mockResponse.put("currentPage", 0);
+        mockResponse.put("totalItems", 1L);
+        mockResponse.put("totalPages", 1);
         
-        when(collectorService.searchCollectors(eq(searchQuery), any())).thenReturn(collectorPage);
-        when(collectorMapper.toResponse(any(Collector.class))).thenAnswer(invocation -> {
-            Collector collector = invocation.getArgument(0);
-            CollectorResponse response = new CollectorResponse();
-            response.setId(collector.getId());
-            response.setUsername(collector.getUsername());
-            return response;
-        });
+        when(collectorService.getCollectorsPaginated(0, 10, "username", "asc", searchQuery)).thenReturn(mockResponse);
 
         // When
         ResponseEntity<Map<String, Object>> responseEntity = collectorController.getCollectorsPaginated(
@@ -183,14 +172,14 @@ class CollectorControllerTest {
         
         Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
-        assertEquals(1L, response.get("totalItems"));
+        assertEquals(1L, (long)response.get("totalItems"));
         
         @SuppressWarnings("unchecked")
         List<CollectorResponse> collectors = (List<CollectorResponse>) response.get("collectors");
         assertEquals(1, collectors.size());
         assertEquals("Bob", collectors.get(0).getUsername());
         
-        verify(collectorService, times(1)).searchCollectors(eq(searchQuery), any());
+        verify(collectorService, times(1)).getCollectorsPaginated(0, 10, "username", "asc", searchQuery);
     }
 
     @Test
@@ -227,9 +216,7 @@ class CollectorControllerTest {
         assertNotNull(responseEntity);
         assertEquals(200, responseEntity.getStatusCode().value());
         
-        verify(collectorService, times(1)).getAllCollectorsWithPagination(argThat(pageable -> 
-            pageable.getSort().getOrderFor("username").getDirection() == Sort.Direction.DESC
-        ));
+        verify(collectorService, times(1)).getCollectorsPaginated(0, 10, "username", "desc", null);
     }
 
     @Test
@@ -237,26 +224,21 @@ class CollectorControllerTest {
     void testGetCollectorsPaginatedDifferentPageSizes() {
         // Given
         int pageSize = 5;
-        List<Collector> collectors = new ArrayList<>();
+        List<CollectorResponse> collectorResponses = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
-            Collector collector = new Collector();
-            collector.setId((long) i);
-            collector.setUsername("User" + i);
-            collector.setOwnedStickers(new HashMap<>());
-            collectors.add(collector);
+            CollectorResponse response = new CollectorResponse();
+            response.setId((long) i);
+            response.setUsername("User" + i);
+            collectorResponses.add(response);
         }
         
-        PageRequest pageRequest = PageRequest.of(0, pageSize, Sort.by(Sort.Direction.ASC, "id"));
-        Page<Collector> collectorPage = new PageImpl<>(collectors, pageRequest, 10); // Total 10 items
+        Map<String, Object> mockResponse = new HashMap<>();
+        mockResponse.put("collectors", collectorResponses);
+        mockResponse.put("currentPage", 0);
+        mockResponse.put("totalItems", 10L);
+        mockResponse.put("totalPages", 2);
         
-        when(collectorService.getAllCollectorsWithPagination(any())).thenReturn(collectorPage);
-        when(collectorMapper.toResponse(any(Collector.class))).thenAnswer(invocation -> {
-            Collector collector = invocation.getArgument(0);
-            CollectorResponse response = new CollectorResponse();
-            response.setId(collector.getId());
-            response.setUsername(collector.getUsername());
-            return response;
-        });
+        when(collectorService.getCollectorsPaginated(0, pageSize, "id", "asc", null)).thenReturn(mockResponse);
 
         // When
         ResponseEntity<Map<String, Object>> responseEntity = collectorController.getCollectorsPaginated(
@@ -266,11 +248,9 @@ class CollectorControllerTest {
         // Then
         assertNotNull(responseEntity);
         Map<String, Object> response = responseEntity.getBody();
-        assertEquals(10L, response.get("totalItems"));
-        assertEquals(2, response.get("totalPages"));
+        assertEquals(10L, (long)response.get("totalItems"));
+        assertEquals(2, (int)response.get("totalPages"));
         
-        verify(collectorService, times(1)).getAllCollectorsWithPagination(argThat(pageable -> 
-            pageable.getPageSize() == pageSize
-        ));
+        verify(collectorService, times(1)).getCollectorsPaginated(0, pageSize, "id", "asc", null);
     }
 }

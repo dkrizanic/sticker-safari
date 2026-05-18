@@ -6,6 +6,7 @@ import com.stickersafari.dto.AlbumResponse;
 import com.stickersafari.entity.Album;
 import com.stickersafari.mapper.AlbumMapper;
 import com.stickersafari.service.AlbumService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -44,7 +45,7 @@ public class AlbumController {
     }
 
     @PostMapping
-    public ResponseEntity<AlbumResponse> createAlbum(@RequestBody AlbumRequest request) {
+    public ResponseEntity<AlbumResponse> createAlbum(@Valid @RequestBody AlbumRequest request) {
         log.info("Creating album: {}", request.getName());
         Album album = albumService.createAlbum(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(albumMapper.toResponse(album));
@@ -52,7 +53,7 @@ public class AlbumController {
 
     @PutMapping("/{albumId}")
     public ResponseEntity<AlbumResponse> updateAlbum(@PathVariable("albumId") Long albumId,
-                                                      @RequestBody AlbumRequest request) {
+                                                      @Valid @RequestBody AlbumRequest request) {
         log.info("Updating album with ID: {}", albumId);
         Album album = albumService.updateAlbum(albumId, request);
         return ResponseEntity.ok(albumMapper.toResponse(album));

@@ -51,7 +51,7 @@ public class TradeOfferController {
     }
 
     @PostMapping("/requests/accept")
-    public ResponseEntity<TradeOfferResponse> acceptPendingTradeOffer(@Valid @RequestBody AnswerPendingTradeOfferRequest request) throws Exception {
+    public ResponseEntity<TradeOfferResponse> acceptPendingTradeOffer(@Valid @RequestBody AnswerPendingTradeOfferRequest request) {
         log.info("Accepting trade offer request");
         TradeOfferResponse response = tradeOfferMapper.toResponse(tradingService.acceptTradeOffer(request));
         return ResponseEntity.ok(response);
@@ -64,14 +64,14 @@ public class TradeOfferController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{senderId}/{receiverId}/{offeredStickerId}/{receivedStickerId}")
-    public ResponseEntity<Void> cancelTradeOffer(
-            @PathVariable("senderId") Long senderId,
-            @PathVariable("receiverId") Long receiverId,
-            @PathVariable("offeredStickerId") Long offeredStickerId,
-            @PathVariable("receivedStickerId") Long receivedStickerId) {
-        log.info("Canceling trade offer from {} to {}", senderId, receiverId);
-        tradingService.cancelTradeOffer(senderId, receiverId, offeredStickerId, receivedStickerId);
+    @DeleteMapping
+    public ResponseEntity<Void> cancelTradeOffer(@Valid CancelTradeOfferRequest request) {
+        log.info("Canceling trade offer from {} to {}", request.getSenderId(), request.getReceiverId());
+        tradingService.cancelTradeOffer(
+            request.getSenderId(), 
+            request.getReceiverId(), 
+            request.getOfferedStickerId(), 
+            request.getReceivedStickerId());
         return ResponseEntity.noContent().build();
     }
 }

@@ -2,8 +2,6 @@ package com.stickersafari.entity;
 
 import com.stickersafari.enums.AlbumStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.ToString;
 
@@ -21,8 +19,6 @@ public class Album {
     @SequenceGenerator(name = "album_id_seq", sequenceName = "album_id_seq", allocationSize = 1)
     private Long id;
 
-    @NotBlank(message = "Album name is required")
-    @Size(min = 2, max = 100, message = "Album name must be between 2 and 100 characters")
     @Column(nullable = false)
     private String name;
 

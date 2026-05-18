@@ -1,14 +1,12 @@
 package com.stickersafari.controller;
 
 import com.stickersafari.dto.PagedRankingResponse;
-import com.stickersafari.dto.RankingEntry;
+import com.stickersafari.dto.RankingFilterRequest;
 import com.stickersafari.service.RankingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/rankings")
@@ -22,32 +20,34 @@ public class RankingController {
     public ResponseEntity<PagedRankingResponse> getMonthlyRanking(
             @PathVariable int year,
             @PathVariable int month,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        log.info("Getting monthly ranking for {}-{} (page={}, size={}, search={})", year, month, page, size, search);
-        PagedRankingResponse rankings = rankingService.getMonthlyRanking(year, month, page, size, search);
-        return ResponseEntity.ok(rankings);
+            RankingFilterRequest filter) {
+        
+        log.debug("Monthly ranking request: {}-{}, page={}, size={}, search={}", 
+                  year, month, filter.getPage(), filter.getSize(), filter.getSearch());
+        PagedRankingResponse response = rankingService.getRankingByType(
+            "monthly", year, month, filter.getPage(), filter.getSize(), filter.getSearch());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/yearly/{year}")
     public ResponseEntity<PagedRankingResponse> getYearlyRanking(
             @PathVariable int year,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        log.info("Getting yearly ranking for {} (page={}, size={}, search={})", year, page, size, search);
-        PagedRankingResponse rankings = rankingService.getYearlyRanking(year, page, size, search);
-        return ResponseEntity.ok(rankings);
+            RankingFilterRequest filter) {
+        
+        log.debug("Yearly ranking request: {}, page={}, size={}, search={}", 
+                  year, filter.getPage(), filter.getSize(), filter.getSearch());
+        PagedRankingResponse response = rankingService.getRankingByType(
+            "yearly", year, null, filter.getPage(), filter.getSize(), filter.getSearch());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/all-time")
-    public ResponseEntity<PagedRankingResponse> getAllTimeRanking(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String search) {
-        log.info("Getting all-time ranking (page={}, size={}, search={})", page, size, search);
-        PagedRankingResponse rankings = rankingService.getAllTimeRanking(page, size, search);
-        return ResponseEntity.ok(rankings);
+    public ResponseEntity<PagedRankingResponse> getAllTimeRanking(RankingFilterRequest filter) {
+        
+        log.debug("All-time ranking request: page={}, size={}, search={}", 
+                  filter.getPage(), filter.getSize(), filter.getSearch());
+        PagedRankingResponse response = rankingService.getRankingByType(
+            "all-time", null, null, filter.getPage(), filter.getSize(), filter.getSearch());
+        return ResponseEntity.ok(response);
     }
 }

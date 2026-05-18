@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface StickerService {
 
@@ -29,4 +30,7 @@ public interface StickerService {
     Sticker createSticker(StickerRequest request);
     Sticker updateSticker(Long stickerId, StickerRequest request);
     Sticker removeStickerFromAlbum(Long stickerId);
+    
+    // Filtered pagination
+    Map<String, Object> getFilteredStickers(int page, int size, String sortBy, String sortDir, String search, Long albumId);
 }

@@ -1,22 +1,27 @@
 package com.stickersafari.service.impl;
 
 import com.stickersafari.dto.StickerRequest;
+import com.stickersafari.dto.StickerResponse;
 import com.stickersafari.entity.Album;
 import com.stickersafari.entity.Collector;
 import com.stickersafari.entity.Notification;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.exception.DailyLimitExceededException;
 import com.stickersafari.exception.EntityNotFoundException;
+import com.stickersafari.mapper.StickerMapper;
 import com.stickersafari.repository.AlbumRepository;
 import com.stickersafari.repository.StickerRepository;
 import com.stickersafari.service.AlbumService;
 import com.stickersafari.service.CollectorService;
 import com.stickersafari.service.NotificationService;
 import com.stickersafari.service.StickerService;
+import com.stickersafari.util.PaginationResponseBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,17 +43,20 @@ public class StickerServiceImpl implements StickerService {
     private final CollectorService collectorService;
     private final AlbumService albumService;
     private final NotificationService notificationService;
+    private final StickerMapper stickerMapper;
 
     public StickerServiceImpl(StickerRepository stickerRepository, 
                               AlbumRepository albumRepository,
                               @Lazy CollectorService collectorService,
                               AlbumService albumService,
-                              NotificationService notificationService) {
+                              NotificationService notificationService,
+                              StickerMapper stickerMapper) {
         this.stickerRepository = stickerRepository;
         this.albumRepository = albumRepository;
         this.collectorService = collectorService;
         this.albumService = albumService;
         this.notificationService = notificationService;
+        this.stickerMapper = stickerMapper;
     }
 
     @Override
@@ -245,6 +254,35 @@ public class StickerServiceImpl implements StickerService {
         log.debug("Getting stickers without album with pagination: page {}, size {}", 
                   pageable.getPageNumber(), pageable.getPageSize());
         return stickerRepository.findByAlbumIsNullWithPagination(pageable);
+    }
+
+    @Override
+    public Map<String, Object> getFilteredStickers(int page, int size, String sortBy, String sortDir, String search, Long albumId) {
+        log.debug("Getting filtered stickers - page: {}, size: {}, sort: {} {}, search: {}, albumId: {}", 
+                  page, size, sortBy, sortDir, search, albumId);
+        
+        // Build sort and pageable
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        // Determine which filter to apply
+        Page<Sticker> stickerPage;
+        if (search != null && !search.trim().isEmpty()) {
+            stickerPage = searchStickers(search, pageable);
+        } else if (albumId != null) {
+            if (albumId == -1) {
+                // -1 means filter for stickers without albums
+                stickerPage = getStickersWithoutAlbumWithPagination(pageable);
+            } else {
+                stickerPage = getStickersOfAlbumWithPagination(albumId, pageable);
+            }
+        } else {
+            stickerPage = getAllStickersWithPagination(pageable);
+        }
+        
+        // Map and return
+        List<StickerResponse> stickers = stickerMapper.toResponseList(stickerPage.getContent());
+        return PaginationResponseBuilder.build(stickers, stickerPage, "stickers");
     }
 
     @Override

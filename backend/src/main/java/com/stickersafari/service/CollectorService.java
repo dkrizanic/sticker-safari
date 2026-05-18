@@ -18,15 +18,20 @@ public interface CollectorService {
     
     void addStickersToCollector(Long collectorId, List<Long> stickerIds);
     
+    void addStickerToCollector(Collector collector, Long stickerId);
+    
+    void removeStickerFromCollector(Collector collector, Long stickerId);
+    
     // CRUD operations
     List<Collector> getAllCollectors();
     Collector createCollector(CollectorRequest request);
-    Collector updateCollector(Long collectorId, CollectorRequest request);
-    void deleteCollector(Long collectorId);
+    Collector updateCollector(Long collectorId, CollectorRequest request, org.springframework.security.core.Authentication authentication);
+    void deleteCollector(Long collectorId, org.springframework.security.core.Authentication authentication);
     
     // Pagination and search
     Page<Collector> getAllCollectorsWithPagination(Pageable pageable);
     Page<Collector> searchCollectors(String search, Pageable pageable);
+    java.util.Map<String, Object> getCollectorsPaginated(int page, int size, String sortBy, String sortDir, String search);
     
     // Business logic
     List<Long> getOwnedStickerIds(Long collectorId);
