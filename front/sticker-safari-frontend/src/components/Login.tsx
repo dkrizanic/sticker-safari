@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useUser } from '../context/UserContext';
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
 import apiService from '../api/apiService';
 
-const API_BASE_URL = 'http://localhost:8080';
 
 const Login = (): JSX.Element => {
     const { login } = useUser();
@@ -29,46 +27,52 @@ const Login = (): JSX.Element => {
         setLoading(true);
         setError('');
 
+        // Store credentials temporarily for authentication
+        localStorage.setItem('username', username);
+        sessionStorage.setItem('password', password);
+
         try {
-            // Call JWT login endpoint
-            const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-                username,
-                password
-            });
-
-            const { token, username: authenticatedUser, roles, expiresIn } = response.data;
-
-            // Store JWT token and username
-            localStorage.setItem('token', token);
-            localStorage.setItem('username', authenticatedUser);
+            // Try to get collector data first (for regular users)
+            const collector = await apiService.getCollectorByUsername(username);
             
-            // Determine role (first role in list)
-            const role = roles[0].replace('ROLE_', ''); // Remove ROLE_ prefix
-            
-            if (role === 'COLLECTOR') {
-                // Fetch collector data
-                const collector = await apiService.getCollectorByUsername(authenticatedUser);
-                login({ 
-                    id: collector.id, 
-                    username: collector.username, 
-                    role: 'COLLECTOR', 
-                    stars: collector.stars || 0 
-                });
-                navigate('/collection');
-            } else if (role === 'ADMIN') {
-                login({ username: authenticatedUser, role: 'ADMIN' });
-                navigate('/admin');
+            // Test authentication by calling a protected endpoint
+            try {
+                await apiService.getNotifications(collector.id);
+            } catch (authError: any) {
+                // If we get 401, credentials are wrong
+                if (authError.response?.status === 401) {
+                    localStorage.removeItem('username');
+                    sessionStorage.removeItem('password');
+                    setError('Invalid username or password.');
+                    setLoading(false);
+                    return;
+                }
+                // Other errors (like no notifications) are okay - auth worked
             }
             
-        } catch (err: any) {
-            console.error('Login failed:', err);
-            localStorage.removeItem('token');
-            localStorage.removeItem('username');
+            // Authentication successful for collector
+            login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
+            navigate('/collection');
             
-            if (err.response?.status === 401) {
-                setError('Invalid username or password');
-            } else {
-                setError('Login failed. Please try again.');
+        } catch (collectorError: any) {
+            // If collector not found (any error), try admin login
+            try {
+                // Test admin authentication by calling an admin endpoint
+                await apiService.getAllAlbums();
+                
+                // Authentication successful for admin
+                login({ username: username, role: 'ADMIN' });
+                navigate('/admin');
+                
+            } catch (adminError: any) {
+                console.error('Admin login failed:', adminError);
+                localStorage.removeItem('username');
+                sessionStorage.removeItem('password');
+                if (adminError.response?.status === 401 || adminError.response?.status === 403) {
+                    setError('Invalid username or password.');
+                } else {
+                    setError('Login failed. Please try again.');
+                }
             }
         } finally {
             setLoading(false);
@@ -86,20 +90,29 @@ const Login = (): JSX.Element => {
             return;
         }
 
+        if (!password.trim()) {
+            setError('Please enter a password');
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
         try {
-            // Create collector account
+            // For new users, default password is "collector"
+            sessionStorage.setItem('password', 'collector');
+            
             const collector = await apiService.createCollector(username);
-            
-            // Note: New collectors need to set password through admin or use default credentials
-            setError('Account created! Please contact admin for login credentials.');
-            setIsRegistering(false);
-            setPassword('');
-            
+            login({ id: collector.id, username: collector.username, role: 'COLLECTOR', stars: collector.stars || 0 });
+            navigate('/collection');
         } catch (err: any) {
             console.error('Registration failed:', err);
+            sessionStorage.removeItem('password');
             const errorMessage = err.response?.data?.message || 'Registration failed. Username might already exist.';
             setError(errorMessage);
         } finally {
