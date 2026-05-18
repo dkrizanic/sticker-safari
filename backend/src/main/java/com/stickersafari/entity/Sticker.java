@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Objects;
 
@@ -36,6 +37,7 @@ public class Sticker {
 
     @ManyToOne(cascade = CascadeType.DETACH)
     @JoinColumn(name = "album")
+    @ToString.Exclude  // Prevent circular reference with Album
     private Album album;
     
     @Override
@@ -49,13 +51,5 @@ public class Sticker {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-    
-    @Override
-    public String toString() {
-        return "Sticker{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                '}';
     }
 }

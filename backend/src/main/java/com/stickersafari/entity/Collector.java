@@ -2,6 +2,7 @@ package com.stickersafari.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ public class Collector {
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @ToString.Exclude  // Prevent circular reference with User
     private User user;
 
     @Column(name = "username")
@@ -72,13 +74,5 @@ public class Collector {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Collector{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                '}';
     }
 }

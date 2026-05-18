@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public class Album {
     private AlbumStatus status = AlbumStatus.PENDING;
 
     @OneToMany(mappedBy = "album", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @ToString.Exclude  // Prevent circular reference with Sticker
     private List<Sticker> stickers = new ArrayList<>();
     
     @Override
@@ -43,13 +45,5 @@ public class Album {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-    
-    @Override
-    public String toString() {
-        return "Album{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                '}';
     }
 }

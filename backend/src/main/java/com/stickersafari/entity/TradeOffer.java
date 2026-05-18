@@ -4,6 +4,7 @@ import com.stickersafari.enums.TradeOfferStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Objects;
 
@@ -18,24 +19,28 @@ public class TradeOffer {
     @MapsId("senderId")
     @JoinColumn(name = "sender_id", nullable = false)
     @NotNull
+    @ToString.Exclude  // Prevent circular reference
     private Collector sender;
 
     @ManyToOne
     @MapsId("receiverId")
     @JoinColumn(name = "receiver_id", nullable = false)
     @NotNull
+    @ToString.Exclude  // Prevent circular reference
     private Collector receiver;
 
     @ManyToOne
     @MapsId("offeredStickerId")
     @JoinColumn(name = "offered_sticker_id", nullable = false)
     @NotNull
+    @ToString.Exclude  // Prevent circular reference
     private Sticker offeredSticker;
 
     @ManyToOne
     @MapsId("receivedStickerId")
     @JoinColumn(name = "received_sticker_id", nullable = false)
     @NotNull
+    @ToString.Exclude  // Prevent circular reference
     private Sticker receivedSticker;
 
     @Column(columnDefinition = "TEXT")
@@ -57,13 +62,5 @@ public class TradeOffer {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-    
-    @Override
-    public String toString() {
-        return "TradeOffer{" +
-                "id=" + id +
-                ", status=" + status +
-                '}';
     }
 }

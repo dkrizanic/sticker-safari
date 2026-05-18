@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -21,6 +22,7 @@ public class Notification {
     @ManyToOne
     @JoinColumn(name = "recipient_id", nullable = false)
     @NotNull
+    @ToString.Exclude  // Prevent circular reference with Collector
     private Collector recipient;
     
     @NotBlank
@@ -42,13 +44,5 @@ public class Notification {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-    
-    @Override
-    public String toString() {
-        return "Notification{" +
-                "id=" + id +
-                ", read=" + read +
-                '}';
     }
 }
