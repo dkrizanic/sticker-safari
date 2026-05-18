@@ -46,14 +46,22 @@ public class NotificationServiceImpl implements NotificationService {
             notificationRepository.deleteAllById(duplicateIds);
         }
         
-        return new ArrayList<>(uniqueNotifications.values());
+        // Sort by createdAt descending (newest first)
+        return uniqueNotifications.values().stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public List<Notification> getUnreadNotifications(Long collectorId) {
         log.debug("Getting unread notifications for collector ID: {}", collectorId);
-        return notificationRepository.findByRecipientIdAndReadFalse(collectorId);
+        List<Notification> notifications = notificationRepository.findByRecipientIdAndReadFalse(collectorId);
+        
+        // Sort by createdAt descending (newest first)
+        return notifications.stream()
+                .sorted(Comparator.comparing(Notification::getCreatedAt).reversed())
+                .collect(Collectors.toList());
     }
 
     @Override
