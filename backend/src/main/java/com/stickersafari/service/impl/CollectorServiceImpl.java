@@ -164,4 +164,25 @@ public class CollectorServiceImpl implements CollectorService {
         }
         return collectorRepository.searchCollectors(search, pageable);
     }
+    
+    @Override
+    public List<Long> getOwnedStickerIds(Long collectorId) {
+        log.debug("Getting owned sticker IDs for collector {}", collectorId);
+        Collector collector = findById(collectorId);
+        return new java.util.ArrayList<>(collector.getOwnedStickers().keySet());
+    }
+    
+    @Override
+    public boolean canModifyCollector(Long collectorId, String username, boolean isAdmin) {
+        log.debug("Checking if user '{}' (admin: {}) can modify collector {}", username, isAdmin, collectorId);
+        
+        // Admins can modify any collector
+        if (isAdmin) {
+            return true;
+        }
+        
+        // Collectors can only modify their own profile
+        Collector collector = findById(collectorId);
+        return collector.getUsername().equals(username);
+    }
 }

@@ -27,4 +27,8 @@ public interface CollectorService {
     // Pagination and search
     Page<Collector> getAllCollectorsWithPagination(Pageable pageable);
     Page<Collector> searchCollectors(String search, Pageable pageable);
+    
+    // Business logic
+    List<Long> getOwnedStickerIds(Long collectorId);
+    boolean canModifyCollector(Long collectorId, String username, boolean isAdmin);
 }

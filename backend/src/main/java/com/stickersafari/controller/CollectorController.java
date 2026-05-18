@@ -3,9 +3,9 @@ package com.stickersafari.controller;
 import com.stickersafari.dto.CollectorRequest;
 import com.stickersafari.dto.CollectorResponse;
 import com.stickersafari.entity.Collector;
-import com.stickersafari.entity.Sticker;
 import com.stickersafari.mapper.CollectorMapper;
 import com.stickersafari.service.CollectorService;
+import com.stickersafari.util.PaginationResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,7 +19,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -48,12 +47,9 @@ public class CollectorController {
     }
 
     @GetMapping("/{id}/stickers")
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public ResponseEntity<List<Long>> getCollectorOwnedStickers(@PathVariable("id") Long id) {
         log.debug("Getting owned stickers for collector with ID: {}", id);
-        Collector collector = collectorService.findById(id);
-        List<Long> ownedStickerIds = collector.getOwnedStickers().keySet().stream()
-                .collect(Collectors.toList());
+        List<Long> ownedStickerIds = collectorService.getOwnedStickerIds(id);
         return ResponseEntity.ok(ownedStickerIds);
     }
 
@@ -80,8 +76,9 @@ public class CollectorController {
                                                               Authentication authentication) {
         log.info("Updating collector with ID: {}", id);
         
-        // Check authorization: user can only update their own profile unless they are admin
-        if (!isAuthorizedToModify(id, authentication)) {
+        // Check authorization
+        boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (!collectorService.canModifyCollector(id, authentication.getName(), isAdmin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own profile");
         }
         
@@ -93,8 +90,9 @@ public class CollectorController {
     public ResponseEntity<Void> deleteCollector(@PathVariable("id") Long id, Authentication authentication) {
         log.info("Deleting collector with ID: {}", id);
         
-        // Check authorization: user can only delete their own profile unless they are admin
-        if (!isAuthorizedToModify(id, authentication)) {
+        // Check authorization
+        boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (!collectorService.canModifyCollector(id, authentication.getName(), isAdmin)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own profile");
         }
         
@@ -127,24 +125,6 @@ public class CollectorController {
                 .map(collectorMapper::toResponse)
                 .collect(Collectors.toList());
         
-        Map<String, Object> response = new HashMap<>();
-        response.put("collectors", collectors);
-        response.put("currentPage", collectorPage.getNumber());
-        response.put("totalItems", collectorPage.getTotalElements());
-        response.put("totalPages", collectorPage.getTotalPages());
-        
-        return ResponseEntity.ok(response);
-    }
-    
-    private boolean isAuthorizedToModify(Long collectorId, Authentication authentication) {
-        // Admins can modify any collector
-        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
-            return true;
-        }
-        
-        // Collectors can only modify their own profile
-        String username = authentication.getName();
-        Collector collector = collectorService.findById(collectorId);
-        return collector.getUsername().equals(username);
+        return ResponseEntity.ok(PaginationResponseBuilder.build(collectors, collectorPage, "collectors"));
     }
 }

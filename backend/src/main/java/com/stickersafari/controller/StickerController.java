@@ -5,6 +5,7 @@ import com.stickersafari.dto.StickerResponse;
 import com.stickersafari.entity.Sticker;
 import com.stickersafari.mapper.StickerMapper;
 import com.stickersafari.service.StickerService;
+import com.stickersafari.util.PaginationResponseBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -15,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,13 +73,8 @@ public class StickerController {
             stickerPage = stickerService.getAllStickersWithPagination(pageable);
         }
         
-        Map<String, Object> response = new HashMap<>();
-        response.put("stickers", stickerMapper.toResponseList(stickerPage.getContent()));
-        response.put("currentPage", stickerPage.getNumber());
-        response.put("totalItems", stickerPage.getTotalElements());
-        response.put("totalPages", stickerPage.getTotalPages());
-        
-        return ResponseEntity.ok(response);
+        List<StickerResponse> stickers = stickerMapper.toResponseList(stickerPage.getContent());
+        return ResponseEntity.ok(PaginationResponseBuilder.build(stickers, stickerPage, "stickers"));
     }
 
     @PostMapping("/open/{albumId}/collector/{userId}")
